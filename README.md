@@ -1,2 +1,2 @@
 # rays_riscv
-it records my study path about risc-v
+it is a simple repo for my study of RISC-V
