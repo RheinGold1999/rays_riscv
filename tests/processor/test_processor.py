@@ -7,7 +7,7 @@ from cocotb.result import TestSuccess
 
 from riscv_assembler import *
 
-from remote_pdb import RemotePdb
+# from remote_pdb import RemotePdb
 # rpdb = RemotePdb("127.0.0.1", 4000)
 
 MEM_SIZE = 4 * 1024  # 4 KB
@@ -27,22 +27,23 @@ def wdata_after_mask(ori_data, wdata, wmask):
   return wr_data
 
 @cocotb.test()
-async def processor_test(dut):
+async def test_01(dut):
   # raise TestSuccess("bypass")
 
   # define lable and instructions
-  L0_ = 4
-  wait_ = 20
-  L1_ = 28
+  L0_ = 8
+  wait_ = 24
+  L1_ = 32
   slow_bit = 1
   init_pc()
   # rpdb.set_trace()
   instructions = [
     ADD(x10, x0, x0),
+    ADDI(x12, x0, 4),
   # L0_:
     ADDI(x10, x10, 1),
     JAL(x1, label_ref(wait_)),
-    JAL(zero, label_ref(L0_)),
+    BNE(x10, x12, label_ref(L0_)),
     EBREAK(),
   # wait_:
     ADDI(x11, x0, 1),
@@ -71,7 +72,7 @@ async def processor_test(dut):
   await FallingEdge(dut.clk_i)
   dut.rst_i.value = 0
   
-  while True:
+  for _ in range(500):
     addr = dut.mem_addr_o.value
     wmask = dut.mem_wmask_o.value
     wdata = dut.mem_wdata_o.value
@@ -98,5 +99,7 @@ async def processor_test(dut):
       assert False, "reach memory limit"
 
     await FallingEdge(dut.clk_i)
+
+  assert False, "don't reach EBREAK"
 
 

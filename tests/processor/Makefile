@@ -2,7 +2,7 @@ SIM ?= icarus
 WAVES ?= 1
 
 TOPLEVEL_LANG = verilog
-VERILOG_SOURCES = $(shell pwd)/../../hdl/processor.v
+VERILOG_SOURCES = $(shell pwd)/../../src/rtl/processor.v
 TOPLEVEL = processor
 MODULE = test_processor
 

@@ -2,7 +2,7 @@ SIM ?= icarus
 WAVES ?= 1
 
 TOPLEVEL_LANG = verilog
-VERILOG_SOURCES = $(shell pwd)/../../hdl/memory.v
+VERILOG_SOURCES = $(shell pwd)/../../src/rtl/memory.v
 TOPLEVEL = memory
 MODULE = test_memory
 

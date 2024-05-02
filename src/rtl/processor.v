@@ -119,7 +119,7 @@ always @(posedge clk_i) begin
       rf_ra[i] <= 32'b0;
     end
   end
-  else if (state_r == WB) begin
+  else if ((state_r == WB) & (rd_id_w != 0)) begin
     rf_ra[rd_id_w] <= wb_data_w;
   end
 end
@@ -234,7 +234,7 @@ always @(posedge clk_i) begin
   if (rst_i) begin
     pc_r <= 32'b0;
   end
-  else if (state_r == DEC) begin
+  else if (state_r == WB) begin
     pc_r <= next_pc_w;
   end
 end
