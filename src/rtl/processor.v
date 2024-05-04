@@ -1,6 +1,6 @@
-`resetall
+// `resetall
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 
 module processor (
   input         clk_i,
@@ -14,24 +14,16 @@ module processor (
 
 // define register file
 reg [31:0] rf_ra[0:31];  // ra: reg array
-
-// define pc
-reg [31:0] pc_r;
-wire [31:0] next_pc_w;
-
-// define instruction decoder signals
-reg [31:0] inst_r;
-
-wire is_alu_reg_w;
-wire is_alu_imm_w;
-wire is_branch_w;
-wire is_jalr_w;
-wire is_jal_w;
-wire is_auipc_w;
-wire is_lui_w;
-wire is_load_w;
-wire is_store_w;
-wire is_system_w;
+always @(posedge clk_i) begin
+  if (rst_i) begin
+    for (int i = 0; i < 32; i = i + 1) begin
+      rf_ra[i] <= 32'b0;
+    end
+  end
+  else if ((state_r == WB) & (rd_id_w != 0)) begin
+    rf_ra[rd_id_w] <= wb_data_w;
+  end
+end
 
 // ----------------------------------------------------------------------------
 // CPU State Machine
@@ -44,7 +36,6 @@ localparam MEM = 3;
 localparam WB  = 4;
 
 reg [2:0] state_r;
-
 always @(posedge clk_i) begin
   if (rst_i) begin
     state_r <= IF;
@@ -83,17 +74,18 @@ end
 // ----------------------------------------------------------------------------
 // Instruction Decoder
 // ----------------------------------------------------------------------------
+reg [31:0] inst_r;
 
-assign is_alu_reg_w = inst_r[6:0] == 7'b011_0011;   // rd <- rs1 OP rs2
-assign is_alu_imm_w = inst_r[6:0] == 7'b001_0011;   // rd <- rs1 OP Iimm
-assign is_branch_w  = inst_r[6:0] == 7'b110_0011;   // if(rs1 OP rs2) PC <- PC + Bimm
-assign is_jalr_w    = inst_r[6:0] == 7'b110_0111;   // rd <- PC + 4; PC <- rs1 + Iimm
-assign is_jal_w     = inst_r[6:0] == 7'b110_1111;   // rd <- PC + 4; PC <- PC + Jimm
-assign is_auipc_w   = inst_r[6:0] == 7'b001_0111;   // rd <- PC + Uimm
-assign is_lui_w     = inst_r[6:0] == 7'b011_0111;   // rd <- Uimm
-assign is_load_w    = inst_r[6:0] == 7'b000_0011;   // rd <- MEM[rs1 + Iimm]
-assign is_store_w   = inst_r[6:0] == 7'b010_0011;   // MEM[rs1 + Simm] <- rs2
-assign is_system_w  = inst_r[6:0] == 7'b111_0011;   // special
+wire is_alu_reg_w = inst_r[6:0] == 7'b011_0011;   // rd <- rs1 OP rs2
+wire is_alu_imm_w = inst_r[6:0] == 7'b001_0011;   // rd <- rs1 OP Iimm
+wire is_branch_w  = inst_r[6:0] == 7'b110_0011;   // if(rs1 OP rs2) PC <- PC + Bimm
+wire is_jalr_w    = inst_r[6:0] == 7'b110_0111;   // rd <- PC + 4; PC <- rs1 + Iimm
+wire is_jal_w     = inst_r[6:0] == 7'b110_1111;   // rd <- PC + 4; PC <- PC + Jimm
+wire is_auipc_w   = inst_r[6:0] == 7'b001_0111;   // rd <- PC + Uimm
+wire is_lui_w     = inst_r[6:0] == 7'b011_0111;   // rd <- Uimm
+wire is_load_w    = inst_r[6:0] == 7'b000_0011;   // rd <- MEM[rs1 + Iimm]
+wire is_store_w   = inst_r[6:0] == 7'b010_0011;   // MEM[rs1 + Simm] <- rs2
+wire is_system_w  = inst_r[6:0] == 7'b111_0011;   // special
 
 wire [4:0] rs1_id_w = inst_r[19:15];
 wire [4:0] rs2_id_w = inst_r[24:20];
@@ -111,17 +103,6 @@ always @(posedge clk_i) begin
     rs2_r <= rf_ra[rs2_id_w];
   end
 
-end
-
-always @(posedge clk_i) begin
-  if (rst_i) begin
-    for (int i = 0; i < 32; i = i + 1) begin
-      rf_ra[i] <= 32'b0;
-    end
-  end
-  else if ((state_r == WB) & (rd_id_w != 0)) begin
-    rf_ra[rd_id_w] <= wb_data_w;
-  end
 end
 
 wire [2:0] funct3_w = inst_r[14:12];
@@ -144,7 +125,7 @@ always @(posedge clk_i) begin
       is_jal_w:     $display("[%f ns]: rd[%d] <- PC(%d) + 4; PC <- PC + Jimm(%h)", $realtime, rd_id_w, pc_r, Jimm_w);
       is_auipc_w:   $display("[%f ns]: rd[%d] <- PC(%d) + Uimm(%h)", $realtime, rd_id_w, pc_r, Uimm_w);
       is_lui_w:     $display("[%f ns]: rd[%d] <- Uimm(%h)", $realtime, rd_id_w, Uimm_w);
-      is_load_w:    $display("[%f ns]: rd[%d] <- MEM[rs1[%d] + Iimm(%h)]", $realtime, rd_id_w, Iimm_w);
+      is_load_w:    $display("[%f ns]: rd[%d] <- MEM[rs1[%d] + Iimm(%h)]", $realtime, rd_id_w, rs1_id_w, Iimm_w);
       is_store_w:   $display("[%f ns]: MEM[rs1[%d] + Simm(%h)] <- rs2", $realtime, rs1_id_w, Simm_w);
       is_system_w:  $display("[%f ns]: special", $realtime);
       default:      $display("[%f ns]: wrong instruction(%h)", $realtime, inst_r);
@@ -163,6 +144,9 @@ wire [31:0] alu_in2_w = is_alu_reg_w ? rs2_r : Iimm_w;
 wire [4:0] sh_amt_w = is_alu_reg_w ? rs2_r[4:0] : Iimm_w[4:0];
 reg [31:0] alu_out_w;
 
+wire [31:0] signed_shift_right_w = $signed(alu_in1_w) >>> sh_amt_w; // SRA
+wire [31:0] unsigned_shift_right_w = alu_in1_w >> sh_amt_w;         // SRL
+
 always @(*) begin
   case (funct3_w)
     // ADD or SUB
@@ -176,7 +160,7 @@ always @(*) begin
     // XOR
     3'b100: alu_out_w = (alu_in1_w ^ alu_in2_w);
     // logical/arithmetic right shift
-    3'b101: alu_out_w = funct7_w[5] ? ($signed(alu_in1_w) >>> sh_amt_w) : (alu_in1_w >> sh_amt_w);
+    3'b101: alu_out_w = (funct7_w[5]) ? (signed_shift_right_w) : (unsigned_shift_right_w);
     // OR
     3'b110: alu_out_w = (alu_in1_w | alu_in2_w);
     // AND
@@ -223,6 +207,9 @@ wire [31:0] rs1_plus_Iimm = rs1_r + Iimm_w;
 // ----------------------------------------------------------------------------
 // Generate Next PC
 // ----------------------------------------------------------------------------
+reg [31:0] pc_r;
+wire [31:0] next_pc_w;
+
 assign next_pc_w = (
   (is_branch_w & is_branch_taken_w) ? pc_plus_Bimm :
   (is_jal_w) ? pc_plus_Jimm :

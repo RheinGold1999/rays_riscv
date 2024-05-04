@@ -123,10 +123,10 @@ def XOR(rd, rs1, rs2):
   return RType(0b011_0011, rd, rs1, rs2, 0b100, 0b000_0000)
 
 def SRL(rd, rs1, rs2):
-  return RType(0b011_0011, rd, rs1, rs2, 0b101, 0b010_0000)
+  return RType(0b011_0011, rd, rs1, rs2, 0b101, 0b000_0000)
 
 def SRA(rd, rs1, rs2):
-  return RType(0b011_0011, rd, rs1, rs2, 0b001, 0b000_0000)
+  return RType(0b011_0011, rd, rs1, rs2, 0b101, 0b010_0000)
 
 def OR(rd, rs1, rs2):
   return RType(0b011_0011, rd, rs1, rs2, 0b110, 0b000_0000)
