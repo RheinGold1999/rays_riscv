@@ -159,27 +159,53 @@ wire [31:0] alu_in2_w = is_alu_reg_w ? rs2_r : Iimm_w;
 wire [4:0] sh_amt_w = is_alu_reg_w ? rs2_r[4:0] : Iimm_w[4:0];
 reg [31:0] alu_out_w;
 
+wire [32:0] add2_w = (
+  (
+    (funct3_w == 3'b000 & funct7_w[5] & inst_r[5]) |
+    (funct3_w == 3'b010) |
+    (funct3_w == 3'b011)
+  ) ? {1'b1, ~alu_in2_w} : {1'b0, alu_in2_w}
+);
+
+wire carry_w = (
+  (
+    (funct3_w == 3'b000 & funct7_w[5] & inst_r[5]) |
+    (funct3_w == 3'b010) |
+    (funct3_w == 3'b011)
+  ) ? (1'b1) : (1'b0)
+);
+
+wire [32:0] alu_addsub_w = {1'b0, alu_in1_w} + add2_w + carry_w;
+wire [31:0] alu_ltu_w = {31'b0, alu_addsub_w[32]};
+wire [31:0] alu_lt_w = (alu_in1_w[31] ^ alu_in2_w[31]) ? {31'b0, alu_in1_w[31]} : alu_ltu_w;
+wire [31:0] alu_xor_w = alu_in1_w ^ alu_in2_w;
+wire [31:0] alu_or_w = alu_in1_w | alu_in2_w;
+wire [31:0] alu_and_w = alu_in1_w & alu_in2_w;
+
 wire [31:0] signed_shift_right_w = $signed(alu_in1_w) >>> sh_amt_w; // SRA
 wire [31:0] unsigned_shift_right_w = alu_in1_w >> sh_amt_w;         // SRL
 
 always @(*) begin
   case (funct3_w)
     // ADD or SUB
-    3'b000: alu_out_w = (funct7_w[5] & inst_r[5]) ? (alu_in1_w - alu_in2_w) : (alu_in1_w + alu_in2_w);
+    // 3'b000: alu_out_w = (funct7_w[5] & inst_r[5]) ? (alu_in1_w - alu_in2_w) : (alu_in1_w + alu_in2_w);
+    3'b000: alu_out_w = alu_addsub_w[31:0];
     // left shift
     3'b001: alu_out_w = (alu_in1_w << sh_amt_w);
     // signed comparison (<)
-    3'b010: alu_out_w = ($signed(alu_in1_w) < $signed(alu_in2_w));
+    // 3'b010: alu_out_w = ($signed(alu_in1_w) < $signed(alu_in2_w));
+    3'b010: alu_out_w = alu_lt_w;
     // unsigned comparison (<)
-    3'b011: alu_out_w = (alu_in1_w < alu_in2_w);
+    // 3'b011: alu_out_w = (alu_in1_w < alu_in2_w);
+    3'b011: alu_out_w = alu_ltu_w;
     // XOR
-    3'b100: alu_out_w = (alu_in1_w ^ alu_in2_w);
+    3'b100: alu_out_w = alu_xor_w;
     // logical/arithmetic right shift
     3'b101: alu_out_w = (funct7_w[5]) ? (signed_shift_right_w) : (unsigned_shift_right_w);
     // OR
-    3'b110: alu_out_w = (alu_in1_w | alu_in2_w);
+    3'b110: alu_out_w = alu_or_w;
     // AND
-    3'b111: alu_out_w = (alu_in1_w & alu_in2_w);
+    3'b111: alu_out_w = alu_and_w;
   endcase
 end
 
