@@ -111,8 +111,8 @@ async def test_rtype(dut):
   # raise TestSuccess("bypass")
 
   # define lable and instructions
-  # rs1 = random.randint(-(1<<11), (1<<11)-1)
-  rs1 = random.randint(-(1<<11), -1)
+  rs1 = random.randint(-(1<<11), (1<<11)-1)
+  # rs1 = random.randint(-(1<<11), -1)
   rs2 = random.randint(-(1<<11), (1<<11)-1)
   rs1_u = c_uint32(rs1).value
   rs2_u = c_uint32(rs2).value
@@ -175,11 +175,11 @@ async def test_rtype(dut):
         dut._log.info("reach EBREAK")
         assert dut.rf_ra[x10].value.signed_integer == (rs1 + rs2), f"x10 (ADD) should be {rs1} + {rs2}"
         assert dut.rf_ra[x11].value.signed_integer == (rs1 - rs2), f"x11 (SUB) should be {rs1} - {rs2}"
-        assert dut.rf_ra[x12].value.integer == ((rs1 << (rs2 & 0x1F)) & U32_MAX), f"x12 (SLL) should be {rs1} << {(rs2 & 0x1F)}"
+        assert dut.rf_ra[x12].value.integer == ((rs1_u << (rs2 & 0x1F)) & U32_MAX), f"x12 (SLL) should be {rs1_u} << {(rs2 & 0x1F)}"
         assert dut.rf_ra[x13].value.signed_integer == (rs1 < rs2), f"x13 (SLT) should be {rs1} < {rs2}"
         assert dut.rf_ra[x14].value.signed_integer == (rs1_u < rs2_u), f"x14 (SLTU) should be {rs1_u} < {rs2_u}"
         assert dut.rf_ra[x15].value.signed_integer == (rs1 ^ rs2), f"x15 (XOR) should be {rs1} ^ {rs2}"
-        assert dut.rf_ra[x16].value.signed_integer == (rs1_u >> (rs2 & 0x1F)), f"x16 (SRL) should be {rs1_u} >> {(rs2 & 0x1F)}"
+        assert dut.rf_ra[x16].value.integer == (rs1_u >> (rs2 & 0x1F)), f"x16 (SRL) should be {rs1_u} >> {(rs2 & 0x1F)}"
         assert dut.rf_ra[x17].value.signed_integer == (rs1 >> (rs2 & 0x1F)), f"x17 (SRA) should be {rs1} >> {(rs2 & 0x1F)}"
         assert dut.rf_ra[x18].value.signed_integer == (rs1 | rs2), f"x18 (OR) should be {rs1} | {rs2}"
         assert dut.rf_ra[x19].value.signed_integer == (rs1 & rs2), f"x19 (AND) should be {rs1} & {rs2}"
@@ -195,3 +195,93 @@ async def test_rtype(dut):
     await FallingEdge(dut.clk_i)
 
   assert False, "don't reach EBREAK"
+
+
+@cocotb.test()
+async def test_itype(dut):
+  # raise TestSuccess("bypass")
+
+  # define lable and instructions
+  rs1 = random.randint(-(1<<11), (1<<11)-1)
+  # rs1 = random.randint(-(1<<11), -1)
+  imm = random.randint(-(1<<11), (1<<11)-1)
+  rs1_u = c_uint32(rs1).value
+  imm_u = c_uint32(imm).value
+  init_pc()
+  # rpdb.set_trace()
+  instructions = [
+    ADDI(x1, x0, rs1),
+    # ADDI(x2, x0, rs2),
+
+    ADDI(x10, x1, imm),
+    SLLI(x12, x1, imm),
+    SLTI(x13, x1, imm),
+    SLTIU(x14, x1, imm),
+    XORI(x15, x1, imm),
+    SRLI(x16, x1, imm),
+    SRAI(x17, x1, imm),
+    ORI(x18, x1, imm),
+    ANDI(x19, x1, imm),
+    
+    EBREAK(),
+  ]
+
+  for idx, inst in enumerate(instructions):
+    print(f"inst[{idx}]={inst:#x}")
+
+  # initialize memory
+  mem_model = [0] * WORD_SIZE
+  inst_size = len(instructions)
+  assert inst_size <= len(mem_model), "instruction exceeds memory size"
+  mem_model[0:inst_size] = instructions
+
+  # clock
+  clock = Clock(dut.clk_i, 10, 'ns')
+  cocotb.start_soon(clock.start(start_high=False))
+  # reset
+  dut.rst_i.value = 1
+  await Timer(20, units='ns')
+  await FallingEdge(dut.clk_i)
+  dut.rst_i.value = 0
+  
+  for _ in range(500):
+    addr = dut.mem_addr_o.value
+    wmask = dut.mem_wmask_o.value
+    wdata = dut.mem_wdata_o.value
+    rstrb = dut.mem_rstrb_o.value
+
+    dut._log.info("")
+    dut._log.info(f"addr={addr}")
+    dut._log.info(f"wmask={wmask}")
+    dut._log.info(f"wdata={wdata}")
+    dut._log.info(f"rstrb={rstrb}")
+
+    word_addr = addr.integer >> 2
+    if rstrb:
+      rdata = mem_model[word_addr]
+      dut.mem_rdata_i.value = rdata
+      dut._log.info(f"rdata={rdata}")
+      if rdata == EBREAK():
+        dut._log.info("reach EBREAK")
+        assert dut.rf_ra[x10].value.signed_integer == (rs1 + imm), f"x10 (ADD) should be {rs1} + {imm}"
+        assert dut.rf_ra[x12].value.integer == ((rs1_u << (imm & 0x1F)) & U32_MAX), f"x12 (SLL) should be {rs1_u} << {(imm & 0x1F)}"
+        assert dut.rf_ra[x13].value.signed_integer == (rs1 < imm), f"x13 (SLT) should be {rs1} < {imm}"
+        assert dut.rf_ra[x14].value.signed_integer == (rs1_u < imm_u), f"x14 (SLTU) should be {rs1_u} < {imm_u}"
+        assert dut.rf_ra[x15].value.signed_integer == (rs1 ^ imm), f"x15 (XOR) should be {rs1} ^ {imm}"
+        assert dut.rf_ra[x16].value.integer == (rs1_u >> (imm & 0x1F)), f"x16 (SRL) should be {rs1_u} >> {(imm & 0x1F)}"
+        assert dut.rf_ra[x17].value.signed_integer == (rs1 >> (imm & 0x1F)), f"x17 (SRA) should be {rs1} >> {(imm & 0x1F)}"
+        assert dut.rf_ra[x18].value.signed_integer == (rs1 | imm), f"x18 (OR) should be {rs1} | {imm}"
+        assert dut.rf_ra[x19].value.signed_integer == (rs1 & imm), f"x19 (AND) should be {rs1} & {imm}"
+        print(f"rs1={rs1}, imm={imm}")
+        print(f"rs1_u={rs1_u}, imm_u={imm_u}")
+        raise TestSuccess("EBREAK")
+
+    mem_model[word_addr] = wdata_after_mask(mem_model[word_addr], wdata, wmask)
+
+    if word_addr > inst_size:
+      assert False, "reach memory limit"
+
+    await FallingEdge(dut.clk_i)
+
+  assert False, "don't reach EBREAK"
+

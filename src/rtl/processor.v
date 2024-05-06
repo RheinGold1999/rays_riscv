@@ -14,16 +14,31 @@ module processor (
 
 // define register file
 reg [31:0] rf_ra[0:31];  // ra: reg array
-always @(posedge clk_i) begin
-  if (rst_i) begin
-    for (int i = 0; i < 32; i = i + 1) begin
-      rf_ra[i] <= 32'b0;
+genvar i;
+generate
+  for (i = 0; i < 32; i = i + 1) begin
+    always @(posedge clk_i) begin
+      if (rst_i) begin
+        rf_ra[i] <= 32'b0;
+      end
+      else if ((state_r == WB) & (rd_id_w == i) & (i != 0)) begin
+        rf_ra[i] <= wb_data_w;
+      end
     end
   end
-  else if ((state_r == WB) & (rd_id_w != 0)) begin
-    rf_ra[rd_id_w] <= wb_data_w;
-  end
-end
+endgenerate
+
+// always @(posedge clk_i) begin
+//   if (rst_i) begin
+//     // integer i;
+//     for (int i = 0; i < 32; i = i + 1) begin
+//       rf_ra[i] <= 32'b0;
+//     end
+//   end
+//   else if ((state_r == WB) & (rd_id_w != 0)) begin
+//     rf_ra[rd_id_w] <= wb_data_w;
+//   end
+// end
 
 // ----------------------------------------------------------------------------
 // CPU State Machine
