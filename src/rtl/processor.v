@@ -14,28 +14,43 @@ module processor (
 
 // define register file
 reg [31:0] rf_ra[0:31];  // ra: reg array
-genvar i;
-generate
-  for (i = 0; i < 32; i = i + 1) begin
-    always @(posedge clk_i) begin
-      if (rst_i) begin
-        rf_ra[i] <= 32'b0;
-      end
-      else if ((state_r == WB) & (rd_id_w == i) & (i != 0)) begin
-        rf_ra[i] <= wb_data_w;
-      end
-    end
-  end
-endgenerate
 
+// genvar i;
+// generate
+//   for (i = 0; i < 32; i = i + 1) begin
+//     always @(posedge clk_i) begin
+//       if (rst_i) begin
+//         rf_ra[i] <= 32'b0;
+//       end
+//       else if ((state_r == WB) & (rd_id_w == i) & (i != 0)) begin
+//         rf_ra[i] <= wb_data_w;
+//       end
+//     end
+//   end
+// endgenerate
+
+integer i;
+initial begin
+  for (i = 0; i < 32; i = i + 1) begin
+    rf_ra[i] = 0;
+  end
+end
+
+always @(posedge clk_i) begin
+  if (wb_en_w) begin
+    rf_ra[rd_id_w] <= wb_data_w;
+  end
+end
+
+
+// integer i;
 // always @(posedge clk_i) begin
 //   if (rst_i) begin
-//     // integer i;
-//     for (int i = 0; i < 32; i = i + 1) begin
+//     for (i = 0; i < 32; ++i) begin
 //       rf_ra[i] <= 32'b0;
 //     end
 //   end
-//   else if ((state_r == WB) & (rd_id_w != 0)) begin
+//   else if (wb_en_w) begin
 //     rf_ra[rd_id_w] <= wb_data_w;
 //   end
 // end
@@ -154,26 +169,27 @@ end
 // two types:
 //     - Rtype: rd <- rs1 OP rs2 (is_alu_reg_w)
 //     - Itype: rd <- rs1 OP Iimm (is_alu_imm_w)
-wire [31:0] alu_in1_w = rs1_r;
-wire [31:0] alu_in2_w = is_alu_reg_w ? rs2_r : Iimm_w;
+wire [31:0] alu_in1_w = (
+  (is_jal_w | is_jalr_w | is_auipc_w) ? pc_r : 
+  (is_lui_w) ? 32'h0 : 
+  rs1_r
+);
+wire [31:0] alu_in2_w = (
+  (is_alu_reg_w | is_branch_w) ? rs2_r : 
+  (is_auipc_w | is_lui_w) ? Uimm_w :
+  (is_jal_w | is_jalr_w) ? 32'h4 :
+  Iimm_w
+);
+
 wire [4:0] sh_amt_w = is_alu_reg_w ? rs2_r[4:0] : Iimm_w[4:0];
-reg [31:0] alu_out_w;
 
-wire [32:0] add2_w = (
-  (
-    (funct3_w == 3'b000 & funct7_w[5] & inst_r[5]) |
-    (funct3_w == 3'b010) |
-    (funct3_w == 3'b011)
-  ) ? {1'b1, ~alu_in2_w} : {1'b0, alu_in2_w}
+wire is_calc_sub_w = (
+  (funct3_w == 3'b000 & funct7_w[5] & inst_r[5]) |
+  (funct3_w == 3'b010) |
+  (funct3_w == 3'b011)
 );
-
-wire carry_w = (
-  (
-    (funct3_w == 3'b000 & funct7_w[5] & inst_r[5]) |
-    (funct3_w == 3'b010) |
-    (funct3_w == 3'b011)
-  ) ? (1'b1) : (1'b0)
-);
+wire [32:0] add2_w = is_calc_sub_w ? {1'b1, ~alu_in2_w} : {1'b0, alu_in2_w};
+wire carry_w = is_calc_sub_w ? 1'b1 : 1'b0;
 
 wire [32:0] alu_addsub_w = {1'b0, alu_in1_w} + add2_w + carry_w;
 wire [31:0] alu_ltu_w = {31'b0, alu_addsub_w[32]};
@@ -182,9 +198,11 @@ wire [31:0] alu_xor_w = alu_in1_w ^ alu_in2_w;
 wire [31:0] alu_or_w = alu_in1_w | alu_in2_w;
 wire [31:0] alu_and_w = alu_in1_w & alu_in2_w;
 
-wire [31:0] signed_shift_right_w = $signed(alu_in1_w) >>> sh_amt_w; // SRA
-wire [31:0] unsigned_shift_right_w = alu_in1_w >> sh_amt_w;         // SRL
+// wire [31:0] signed_shift_right_w = $signed(alu_in1_w) >>> sh_amt_w; // SRA
+// wire [31:0] unsigned_shift_right_w = alu_in1_w >> sh_amt_w;         // SRL
+wire [32:0] alu_sra_w = $signed({(funct7_w[5] & alu_in1_w[31]), alu_in1_w}) >>> sh_amt_w;
 
+reg [31:0] alu_out_w;
 always @(*) begin
   case (funct3_w)
     // ADD or SUB
@@ -201,7 +219,7 @@ always @(*) begin
     // XOR
     3'b100: alu_out_w = alu_xor_w;
     // logical/arithmetic right shift
-    3'b101: alu_out_w = (funct7_w[5]) ? (signed_shift_right_w) : (unsigned_shift_right_w);
+    3'b101: alu_out_w = alu_sra_w[31:0];
     // OR
     3'b110: alu_out_w = alu_or_w;
     // AND
@@ -212,27 +230,40 @@ end
 // ----------------------------------------------------------------------------
 // Branch
 // ----------------------------------------------------------------------------
+wire is_branch_ne_w = |alu_xor_w;
+wire is_branch_eq_w = ~is_branch_ne_w;
+wire is_branch_lt_w = alu_lt_w;
+wire is_branch_ge_w = ~alu_lt_w;
+wire is_branch_ltu_w = alu_ltu_w;
+wire is_branch_geu_w = ~alu_ltu_w;
+
 reg is_branch_taken_w;
 always @(*) begin
   case (funct3_w)
     // BEQ rs1, rs2, imm: if(rs1 == rs2) PC <- PC + Bimm
-    3'b000: is_branch_taken_w = (rs1_r == rs2_r);
+    // 3'b000: is_branch_taken_w = (rs1_r == rs2_r);
+    3'b000: is_branch_taken_w = is_branch_eq_w;
     // BNE rs1, rs2, imm: if(rs1 != rs2) PC <- PC + Bimm
-    3'b001: is_branch_taken_w = (rs1_r != rs2_r);
+    // 3'b001: is_branch_taken_w = (rs1_r != rs2_r);
+    3'b001: is_branch_taken_w = is_branch_ne_w;
     // BLT rs1, rs2, imm: if(rs1 < rs2) PC <- PC + Bimm (signed comparison)
-    3'b100: is_branch_taken_w = ($signed(rs1_r) < $signed(rs2_r));
+    // 3'b100: is_branch_taken_w = ($signed(rs1_r) < $signed(rs2_r));
+    3'b100: is_branch_taken_w = is_branch_lt_w;
     // BGE rs1, rs2, imm: if(rs1 >= rs2) PC <- PC + Bimm (signed comparison)
-    3'b101: is_branch_taken_w = ($signed(rs1_r) >= $signed(rs2_r));
+    // 3'b101: is_branch_taken_w = ($signed(rs1_r) >= $signed(rs2_r));
+    3'b101: is_branch_taken_w = is_branch_ge_w;
     // BLTU rs1, rs2, imm: if(rs1 < rs2) PC <- PC + Bimm (unsigned comparison)
-    3'b110: is_branch_taken_w = (rs1_r < rs2_r);
+    // 3'b110: is_branch_taken_w = (rs1_r < rs2_r);
+    3'b110: is_branch_taken_w = is_branch_ltu_w;
     // BGEU rs1, rs2, imm: if(rs1 >= rs2) PC <- PC + Bimm (unsigned comparison)
-    3'b111: is_branch_taken_w = (rs1_r >= rs2_r);
+    // 3'b111: is_branch_taken_w = (rs1_r >= rs2_r);
+    3'b111: is_branch_taken_w = is_branch_geu_w;
     // otherwise branch is not taken, `default` statement is necessary to avoid latch
     default: is_branch_taken_w = 1'b0;
   endcase
 end
 
-wire [31:0] pc_plus_Bimm = pc_r + Bimm_w;
+// wire [31:0] pc_plus_Bimm = pc_r + Bimm_w;
 
 // ----------------------------------------------------------------------------
 // Jump
@@ -240,24 +271,32 @@ wire [31:0] pc_plus_Bimm = pc_r + Bimm_w;
 // JAL rd, imm: rd <- PC + 4; PC <- PC + Jimm
 // JALR rd, rs1, imm: rd <- PC + 4; PC <- rs1 + Iimm
 
-wire [31:0] pc_plus_4 = pc_r + 4;
-wire [31:0] pc_plus_Jimm = pc_r + Jimm_w;
-wire [31:0] pc_plus_Uimm = pc_r + Uimm_w;
-wire [31:0] rs1_plus_Iimm = rs1_r + Iimm_w;
+// wire [31:0] pc_plus_4 = pc_r + 4;
+// wire [31:0] pc_plus_4 = alu_out_w;
+// wire [31:0] pc_plus_Jimm = pc_r + Jimm_w;
+// wire [31:0] pc_plus_Uimm = pc_r + Uimm_w;
+// wire [31:0] rs1_plus_Iimm = rs1_r + Iimm_w;
+
+wire [31:0] next_pc_add1_w = is_jalr_w ? rs1_r : pc_r;
+wire [31:0] next_pc_add2_w = (
+  (is_branch_w & is_branch_taken_w) ? Bimm_w :
+  (is_jal_w) ? Jimm_w :
+  (is_jalr_w) ? Iimm_w :
+  32'h4
+);
 
 // ----------------------------------------------------------------------------
 // Generate Next PC
 // ----------------------------------------------------------------------------
+// wire [31:0] next_pc_w = (
+//   (is_branch_w & is_branch_taken_w) ? pc_plus_Bimm :
+//   (is_jal_w) ? pc_plus_Jimm :
+//   (is_jalr_w) ? rs1_plus_Iimm :
+//   pc_plus_4
+// );
+wire [31:0] next_pc_w = next_pc_add1_w + next_pc_add2_w;
+
 reg [31:0] pc_r;
-wire [31:0] next_pc_w;
-
-assign next_pc_w = (
-  (is_branch_w & is_branch_taken_w) ? pc_plus_Bimm :
-  (is_jal_w) ? pc_plus_Jimm :
-  (is_jalr_w) ? rs1_plus_Iimm :
-  pc_plus_4
-);
-
 always @(posedge clk_i) begin
   if (rst_i) begin
     pc_r <= 32'b0;
@@ -343,6 +382,7 @@ wire [3:0] store_mask_w = (
 // ----------------------------------------------------------------------------
 wire wb_en_w = (
   (state_r == WB) &
+  (rd_id_w != 0) &
   (   
     is_alu_reg_w |
     is_alu_imm_w | 
@@ -354,14 +394,7 @@ wire wb_en_w = (
   )
 );
 
-wire [31:0] wb_data_w = (
-  (is_alu_reg_w | is_alu_imm_w) ? alu_out_w :
-  (is_jal_w | is_jalr_w) ? pc_plus_4 :
-  (is_auipc_w) ? pc_plus_Uimm :
-  (is_lui_w) ? Uimm_w :
-  (is_load_w) ? load_data_w :
-  0
-);
+wire [31:0] wb_data_w = is_load_w ? load_data_w : alu_out_w;
 
 // ----------------------------------------------------------------------------
 // Output Interface

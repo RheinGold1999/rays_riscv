@@ -1,5 +1,6 @@
 echo on
 
+# read_verilog ../src/rtl/processor_example.v
 read_verilog ../src/rtl/processor.v
 
 # synth
