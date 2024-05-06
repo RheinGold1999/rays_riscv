@@ -1,0 +1,9 @@
+echo on
+
+read_verilog ../src/rtl/processor.v
+
+# synth
+# abc -g NAND
+
+synth_ice40
+stat
