@@ -103,7 +103,7 @@ async def test_loop(dut):
 
     await FallingEdge(dut.clk_i)
 
-  assert False, "don't reach EBREAK"
+  assert False, "not reach EBREAK"
 
 
 @cocotb.test()
@@ -194,7 +194,7 @@ async def test_rtype(dut):
 
     await FallingEdge(dut.clk_i)
 
-  assert False, "don't reach EBREAK"
+  assert False, "not reach EBREAK"
 
 
 @cocotb.test()
@@ -283,7 +283,7 @@ async def test_itype(dut):
 
     await FallingEdge(dut.clk_i)
 
-  assert False, "don't reach EBREAK"
+  assert False, "not reach EBREAK"
 
 
 @cocotb.test()
@@ -400,5 +400,71 @@ async def test_btype(dut):
 
     await FallingEdge(dut.clk_i)
 
-  assert False, "don't reach EBREAK"
+  assert False, "not reach EBREAK"
+
+@cocotb.test()
+async def test_utype(dut):
+  # raise TestSuccess("bypass")
+
+  # define lable and instructions
+  imm = c_int32(random.randint(-(1<<31), (1<<31)-1)).value
+  init_pc()
+  # rpdb.set_trace()
+  instructions = [
+    LUI(x1, imm),
+    ADDI(x2, x0, imm),
+    AUIPC(x3, imm),
+    EBREAK(),
+  ]
+
+  for idx, inst in enumerate(instructions):
+    print(f"inst[{idx}]={inst:#x}")
+
+  # initialize memory
+  mem_model = [0] * WORD_SIZE
+  inst_size = len(instructions)
+  assert inst_size <= len(mem_model), "instruction exceeds memory size"
+  mem_model[0:inst_size] = instructions
+
+  # clock
+  clock = Clock(dut.clk_i, 10, 'ns')
+  cocotb.start_soon(clock.start(start_high=False))
+  # reset
+  dut.rst_i.value = 1
+  await Timer(20, units='ns')
+  await FallingEdge(dut.clk_i)
+  dut.rst_i.value = 0
+  
+  for _ in range(500):
+    addr = dut.mem_addr_o.value
+    wmask = dut.mem_wmask_o.value
+    wdata = dut.mem_wdata_o.value
+    rstrb = dut.mem_rstrb_o.value
+
+    dut._log.info("")
+    dut._log.info(f"addr={addr}")
+    dut._log.info(f"wmask={wmask}")
+    dut._log.info(f"wdata={wdata}")
+    dut._log.info(f"rstrb={rstrb}")
+
+    word_addr = addr.integer >> 2
+    if rstrb:
+      rdata = mem_model[word_addr]
+      dut.mem_rdata_i.value = rdata
+      dut._log.info(f"rdata={rdata}")
+      if rdata == EBREAK():
+        dut._log.info("reach EBREAK")
+        assert dut.rf_ra[x1].value.signed_integer == c_int32(imm & 0xFFFF_F000).value, f"x1 (LUI) should be {c_int32(imm & 0xFFFF_F000).value}"
+        assert dut.rf_ra[x3].value.signed_integer == c_int32((imm & 0xFFFF_F000) + 8).value, f"x3 (AUIPC) should be {c_int32((imm & 0xFFFF_F000) + 8).value}"
+        print(f"imm={imm}")
+        raise TestSuccess("EBREAK")
+
+    mem_model[word_addr] = wdata_after_mask(mem_model[word_addr], wdata, wmask)
+
+    if word_addr > inst_size:
+      assert False, "reach memory limit"
+
+    await FallingEdge(dut.clk_i)
+
+  assert False, "not reach EBREAK"
 

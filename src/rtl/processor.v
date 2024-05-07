@@ -192,8 +192,9 @@ wire is_alu_calc_sub_w = (
 wire [32:0] add2_w = is_alu_calc_sub_w ? {1'b1, ~alu_in2_w} : {1'b0, alu_in2_w};
 wire carry_w = is_alu_calc_sub_w ? 1'b1 : 1'b0;
 
-wire [32:0] alu_addsub_w = {1'b0, alu_in1_w} + add2_w + carry_w;
-wire [31:0] alu_ltu_w = {31'b0, alu_addsub_w[32]};
+wire [31:0] alu_add_w = alu_in1_w + alu_in2_w;
+wire [32:0] alu_sub_w = {1'b0, alu_in1_w} + {1'b1, ~alu_in2_w} + 33'b1;
+wire [31:0] alu_ltu_w = {31'b0, alu_sub_w[32]};
 wire [31:0] alu_lt_w = (alu_in1_w[31] ^ alu_in2_w[31]) ? {31'b0, alu_in1_w[31]} : alu_ltu_w;
 wire [31:0] alu_xor_w = alu_in1_w ^ alu_in2_w;
 wire [31:0] alu_or_w = alu_in1_w | alu_in2_w;
@@ -208,7 +209,7 @@ always @(*) begin
   case (funct3_w)
     // ADD or SUB
     // 3'b000: alu_out_w = (funct7_w[5] & inst_r[5]) ? (alu_in1_w - alu_in2_w) : (alu_in1_w + alu_in2_w);
-    3'b000: alu_out_w = alu_addsub_w[31:0];
+    3'b000: alu_out_w = (funct7_w[5] & inst_r[5]) ? alu_sub_w[31:0] : alu_add_w;
     // left shift
     3'b001: alu_out_w = (alu_in1_w << sh_amt_w);
     // signed comparison (<)
@@ -231,12 +232,12 @@ end
 // ----------------------------------------------------------------------------
 // Branch
 // ----------------------------------------------------------------------------
-wire is_branch_ne_w = |alu_xor_w;
-wire is_branch_eq_w = ~is_branch_ne_w;
+wire is_branch_ne_w = (|alu_xor_w);
+wire is_branch_eq_w = (~is_branch_ne_w);
 wire is_branch_lt_w = alu_lt_w;
-wire is_branch_ge_w = ~alu_lt_w;
+wire is_branch_ge_w = (~alu_lt_w);
 wire is_branch_ltu_w = alu_ltu_w;
-wire is_branch_geu_w = ~alu_ltu_w;
+wire is_branch_geu_w = (~alu_ltu_w);
 
 reg is_branch_taken_w;
 always @(*) begin
@@ -395,7 +396,11 @@ wire wb_en_w = (
   )
 );
 
-wire [31:0] wb_data_w = is_load_w ? load_data_w : alu_out_w;
+wire [31:0] wb_data_w = (
+  (is_load_w) ? load_data_w : 
+  (is_alu_reg_w | is_alu_imm_w) ? alu_out_w :
+  alu_add_w
+);
 
 // ----------------------------------------------------------------------------
 // Output Interface
