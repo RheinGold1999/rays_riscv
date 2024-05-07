@@ -297,7 +297,7 @@ async def test_btype(dut):
   L3_ = 72
   L4_ = 80
   L5_ = 88
-  B0_ = 20
+  # B0_ = 20
   B1_ = 24
   B2_ = 28
   B3_ = 32
@@ -568,4 +568,126 @@ async def test_load(dut):
 
   assert False, "not reach EBREAK"
 
+
+@cocotb.test()
+async def test_store(dut):
+  # raise TestSuccess("bypass")
+
+  # define lable and instructions
+  imm1 = c_uint32(random.randint(-(1<<31), (1<<31)-1)).value
+  imm1 = set_bitfield(imm1, 0, 11, 11)  # ADDI will signed-extends imm
+  imm2 = c_uint32(random.randint(-(1<<31), (1<<31)-1)).value
+  imm2 = set_bitfield(imm2, 0, 11, 11)  # ADDI will signed-extends imm
+  imm3 = c_uint32(random.randint(-(1<<31), (1<<31)-1)).value
+  imm3 = set_bitfield(imm3, 0, 11, 11)  # ADDI will signed-extends imm
+  imm4 = c_uint32(random.randint(-(1<<31), (1<<31)-1)).value
+  imm4 = set_bitfield(imm4, 0, 11, 11)  # ADDI will signed-extends imm
+  init_pc()
+  # rpdb.set_trace()
+  L0_ = 64
+  L1_ = 68
+  L2_ = 72
+
+  instructions = [
+    # init x1 ~ x4 with imm1 ~ imm4 respectively
+    LUI(x1, imm1),
+    ADDI(x1, x1, imm1),
+
+    LUI(x2, imm2),
+    ADDI(x2, x2, imm2),
+
+    LUI(x3, imm3),
+    ADDI(x3, x3, imm3),
+
+    LUI(x4, imm4),
+    ADDI(x4, x4, imm4),
+
+    SB(x1, x0, L0_),
+    SB(x2, x0, L0_ + 1),
+    SB(x3, x0, L0_ + 2),
+    SB(x4, x0, L0_ + 3),
+
+    SH(x1, x0, L1_),
+    SH(x2, x0, L1_ + 2),
+
+    SW(x1, x0, L2_),
+
+    EBREAK(),
+  # L0_:
+    0,
+  # L1_:
+    0,
+  # L2_:
+    0,
+  ]
+
+  for idx, inst in enumerate(instructions):
+    print(f"inst[{idx}]={inst:#x}")
+
+  # initialize memory
+  mem_model = [0] * WORD_SIZE
+  inst_size = len(instructions)
+  assert inst_size <= len(mem_model), "instruction exceeds memory size"
+  mem_model[0:inst_size] = instructions
+
+  # clock
+  clock = Clock(dut.clk_i, 10, 'ns')
+  cocotb.start_soon(clock.start(start_high=False))
+  # reset
+  dut.rst_i.value = 1
+  await Timer(20, units='ns')
+  await FallingEdge(dut.clk_i)
+  dut.rst_i.value = 0
+  
+  for _ in range(500):
+    addr = dut.mem_addr_o.value
+    wmask = dut.mem_wmask_o.value
+    wdata = dut.mem_wdata_o.value
+    rstrb = dut.mem_rstrb_o.value
+
+    dut._log.info("")
+    dut._log.info(f"addr={addr}")
+    dut._log.info(f"wmask={wmask}")
+    dut._log.info(f"wdata={wdata}")
+    dut._log.info(f"rstrb={rstrb}")
+
+    word_addr = addr.integer >> 2
+    if rstrb:
+      rdata = mem_model[word_addr]
+      dut.mem_rdata_i.value = rdata
+      dut._log.info(f"rdata={rdata}")
+      if rdata == EBREAK():
+        dut._log.info("reach EBREAK")
+
+        dut._log.info(f"imm1={imm1:#x}")
+        dut._log.info(f"imm2={imm2:#x}")
+        dut._log.info(f"imm3={imm3:#x}")
+        dut._log.info(f"imm4={imm4:#x}")
+
+        L0_word = 0
+        L0_word = set_bitfield(L0_word, get_bitfield(imm1, 7, 0), 7, 0)
+        L0_word = set_bitfield(L0_word, get_bitfield(imm2, 7, 0), 15, 8)
+        L0_word = set_bitfield(L0_word, get_bitfield(imm3, 7, 0), 23, 16)
+        L0_word = set_bitfield(L0_word, get_bitfield(imm4, 7, 0), 31, 24)
+
+        assert mem_model[L0_//4] == L0_word, f"mem_model[{L0_//4}] ({mem_model[L0_//4]:#x}) should be {L0_word:#x}"
+        
+        L1_word = 0
+        L1_word = set_bitfield(L1_word, get_bitfield(imm1, 15, 0), 15, 0)
+        L1_word = set_bitfield(L1_word, get_bitfield(imm2, 15, 0), 31, 16)
+        assert mem_model[L1_//4] == L1_word, f"mem_model[{L1_//4}] ({mem_model[L1_//4]:#x}) should be {L1_word:#x}"
+
+        L2_word = get_bitfield(imm1, 31, 0)
+        assert mem_model[L2_//4] == L2_word, f"mem_model[{L2_//4}] ({mem_model[L2_//4]:#x}) should be {L2_word:#x}"
+
+        raise TestSuccess("EBREAK")
+
+    mem_model[word_addr] = wdata_after_mask(mem_model[word_addr], wdata, wmask)
+
+    if word_addr > inst_size:
+      assert False, "reach memory limit"
+
+    await FallingEdge(dut.clk_i)
+
+  assert False, "not reach EBREAK"
 

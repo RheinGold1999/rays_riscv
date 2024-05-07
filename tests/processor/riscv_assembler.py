@@ -304,14 +304,14 @@ def SType(opcode, rs1, rs2, imm, funct3):
   PC += 4
   return inst & U32_MAX
 
-def SB(rs1, rs2, imm):
-  return SType(0b010_0011, rs2, rs1, imm, 0b000)
+def SB(rs2, rs1, imm):
+  return SType(0b010_0011, rs1, rs2, imm, 0b000)
 
-def SH(rs1, rs2, imm):
-  return SType(0b010_0011, rs2, rs1, imm, 0b001)
+def SH(rs2, rs1, imm):
+  return SType(0b010_0011, rs1, rs2, imm, 0b001)
 
-def SW(rs1, rs2, imm):
-  return SType(0b010_0011, rs2, rs1, imm, 0b010)
+def SW(rs2, rs1, imm):
+  return SType(0b010_0011, rs1, rs2, imm, 0b010)
 
 
 # #########################################################
