@@ -468,3 +468,104 @@ async def test_utype(dut):
 
   assert False, "not reach EBREAK"
 
+
+@cocotb.test()
+async def test_load(dut):
+  # raise TestSuccess("bypass")
+
+  # define lable and instructions
+  imm = c_int32(random.randint(-(1<<31), (1<<31)-1)).value
+  init_pc()
+  # rpdb.set_trace()
+  instructions = [
+    imm,
+
+    LB(x1, x0, 0),
+    LB(x2, x0, 1),
+    LB(x3, x0, 2),
+    LB(x4, x0, 3),
+
+    LH(x5, x0, 0),
+    LH(x6, x0, 2),
+
+    LW(x7, x0, 0),
+
+    LBU(x8, x0, 0),
+    LBU(x9, x0, 1),
+    LBU(x10, x0, 2),
+    LBU(x11, x0, 3),
+
+    LHU(x12, x0, 0),
+    LHU(x13, x0, 2),
+
+    EBREAK(),
+  ]
+
+  for idx, inst in enumerate(instructions):
+    print(f"inst[{idx}]={inst:#x}")
+
+  # initialize memory
+  mem_model = [0] * WORD_SIZE
+  inst_size = len(instructions)
+  assert inst_size <= len(mem_model), "instruction exceeds memory size"
+  mem_model[0:inst_size] = instructions
+
+  # clock
+  clock = Clock(dut.clk_i, 10, 'ns')
+  cocotb.start_soon(clock.start(start_high=False))
+  # reset
+  dut.rst_i.value = 1
+  await Timer(20, units='ns')
+  await FallingEdge(dut.clk_i)
+  dut.rst_i.value = 0
+  
+  for _ in range(500):
+    addr = dut.mem_addr_o.value
+    wmask = dut.mem_wmask_o.value
+    wdata = dut.mem_wdata_o.value
+    rstrb = dut.mem_rstrb_o.value
+
+    dut._log.info("")
+    dut._log.info(f"addr={addr}")
+    dut._log.info(f"wmask={wmask}")
+    dut._log.info(f"wdata={wdata}")
+    dut._log.info(f"rstrb={rstrb}")
+
+    word_addr = addr.integer >> 2
+    if rstrb:
+      rdata = mem_model[word_addr]
+      dut.mem_rdata_i.value = rdata
+      dut._log.info(f"rdata={rdata}")
+      if rdata == EBREAK():
+        dut._log.info("reach EBREAK")
+        assert dut.rf_ra[x1].value.signed_integer == c_int8(get_bitfield(imm, 7, 0)).value, f"x1 should be {c_int8(get_bitfield(imm, 7, 0)).value}"
+        assert dut.rf_ra[x2].value.signed_integer == c_int8(get_bitfield(imm, 15, 8)).value, f"x1 should be {c_int8(get_bitfield(imm, 15, 8)).value}"
+        assert dut.rf_ra[x3].value.signed_integer == c_int8(get_bitfield(imm, 23, 16)).value, f"x1 should be {c_int8(get_bitfield(imm, 23, 16)).value}"
+        assert dut.rf_ra[x4].value.signed_integer == c_int8(get_bitfield(imm, 31, 24)).value, f"x1 should be {c_int8(get_bitfield(imm, 31, 24)).value}"
+
+        assert dut.rf_ra[x5].value.signed_integer == c_int16(get_bitfield(imm, 15, 0)).value, f"x1 should be {c_int16(get_bitfield(imm, 15, 0)).value}"
+        assert dut.rf_ra[x6].value.signed_integer == c_int16(get_bitfield(imm, 31, 16)).value, f"x1 should be {c_int16(get_bitfield(imm, 31, 16)).value}"
+
+        assert dut.rf_ra[x7].value.signed_integer == c_int32(imm).value, f"x1 should be {c_int32(imm).value}"
+
+        assert dut.rf_ra[x8].value.integer == c_uint8(get_bitfield(imm, 7, 0)).value, f"x1 should be {c_uint8(get_bitfield(imm, 7, 0)).value}"
+        assert dut.rf_ra[x9].value.integer == c_uint8(get_bitfield(imm, 15, 8)).value, f"x1 should be {c_uint8(get_bitfield(imm, 15, 8)).value}"
+        assert dut.rf_ra[x10].value.integer == c_uint8(get_bitfield(imm, 23, 16)).value, f"x1 should be {c_uint8(get_bitfield(imm, 23, 16)).value}"
+        assert dut.rf_ra[x11].value.integer == c_uint8(get_bitfield(imm, 31, 24)).value, f"x1 should be {c_uint8(get_bitfield(imm, 31, 24)).value}"
+
+        assert dut.rf_ra[x12].value.integer == c_uint16(get_bitfield(imm, 15, 0)).value, f"x1 should be {c_uint16(get_bitfield(imm, 15, 0)).value}"
+        assert dut.rf_ra[x13].value.integer == c_uint16(get_bitfield(imm, 31, 16)).value, f"x1 should be {c_uint16(get_bitfield(imm, 31, 16)).value}"
+
+        print(f"imm={imm}")
+        raise TestSuccess("EBREAK")
+
+    mem_model[word_addr] = wdata_after_mask(mem_model[word_addr], wdata, wmask)
+
+    if word_addr > inst_size:
+      assert False, "reach memory limit"
+
+    await FallingEdge(dut.clk_i)
+
+  assert False, "not reach EBREAK"
+
+
