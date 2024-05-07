@@ -15,6 +15,9 @@ module processor (
 // define register file
 reg [31:0] rf_ra[0:31];  // ra: reg array
 
+// ----------------------------------------------------------------------------
+// with reset the regfile is synthesized to SB_DFFESR and SB_LUT4
+// ----------------------------------------------------------------------------
 // genvar i;
 // generate
 //   for (i = 0; i < 32; i = i + 1) begin
@@ -22,13 +25,31 @@ reg [31:0] rf_ra[0:31];  // ra: reg array
 //       if (rst_i) begin
 //         rf_ra[i] <= 32'b0;
 //       end
-//       else if ((state_r == WB) & (rd_id_w == i) & (i != 0)) begin
+//       else if ((wb_en_w) & (rd_id_w == i)) begin
 //         rf_ra[i] <= wb_data_w;
 //       end
 //     end
 //   end
 // endgenerate
 
+// ----------------------------------------------------------------------------
+// with reset the regfile is synthesized to SB_DFFESR and SB_LUT4
+// ----------------------------------------------------------------------------
+// integer i;
+// always @(posedge clk_i) begin
+//   if (rst_i) begin
+//     for (i = 0; i < 32; ++i) begin
+//       rf_ra[i] <= 32'b0;
+//     end
+//   end
+//   else if (wb_en_w) begin
+//     rf_ra[rd_id_w] <= wb_data_w;
+//   end
+// end
+
+// ----------------------------------------------------------------------------
+// without reset the regfile is synthesized to SB_RAM40_4K
+// ----------------------------------------------------------------------------
 integer i;
 initial begin
   for (i = 0; i < 32; i = i + 1) begin
@@ -41,19 +62,6 @@ always @(posedge clk_i) begin
     rf_ra[rd_id_w] <= wb_data_w;
   end
 end
-
-
-// integer i;
-// always @(posedge clk_i) begin
-//   if (rst_i) begin
-//     for (i = 0; i < 32; ++i) begin
-//       rf_ra[i] <= 32'b0;
-//     end
-//   end
-//   else if (wb_en_w) begin
-//     rf_ra[rd_id_w] <= wb_data_w;
-//   end
-// end
 
 // ----------------------------------------------------------------------------
 // CPU State Machine
