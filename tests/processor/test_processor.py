@@ -93,7 +93,7 @@ async def test_loop(dut):
       dut._log.info(f"rdata={rdata}")
       if rdata == EBREAK():
         dut._log.info("reach EBREAK")
-        assert dut.rf_ra[x10].value == loop_num, f"x10 should be {loop_num}"
+        assert dut.regfile_ra[x10].value == loop_num, f"x10 should be {loop_num}"
         raise TestSuccess("EBREAK")
 
     mem_model[word_addr] = wdata_after_mask(mem_model[word_addr], wdata, wmask)
@@ -173,16 +173,16 @@ async def test_rtype(dut):
       dut._log.info(f"rdata={rdata}")
       if rdata == EBREAK():
         dut._log.info("reach EBREAK")
-        assert dut.rf_ra[x10].value.signed_integer == (rs1 + rs2), f"x10 (ADD) should be {rs1} + {rs2}"
-        assert dut.rf_ra[x11].value.signed_integer == (rs1 - rs2), f"x11 (SUB) should be {rs1} - {rs2}"
-        assert dut.rf_ra[x12].value.integer == ((rs1_u << (rs2 & 0x1F)) & U32_MAX), f"x12 (SLL) should be {rs1_u} << {(rs2 & 0x1F)}"
-        assert dut.rf_ra[x13].value.signed_integer == (rs1 < rs2), f"x13 (SLT) should be {rs1} < {rs2}"
-        assert dut.rf_ra[x14].value.signed_integer == (rs1_u < rs2_u), f"x14 (SLTU) should be {rs1_u} < {rs2_u}"
-        assert dut.rf_ra[x15].value.signed_integer == (rs1 ^ rs2), f"x15 (XOR) should be {rs1} ^ {rs2}"
-        assert dut.rf_ra[x16].value.integer == (rs1_u >> (rs2 & 0x1F)), f"x16 (SRL) should be {rs1_u} >> {(rs2 & 0x1F)}"
-        assert dut.rf_ra[x17].value.signed_integer == (rs1 >> (rs2 & 0x1F)), f"x17 (SRA) should be {rs1} >> {(rs2 & 0x1F)}"
-        assert dut.rf_ra[x18].value.signed_integer == (rs1 | rs2), f"x18 (OR) should be {rs1} | {rs2}"
-        assert dut.rf_ra[x19].value.signed_integer == (rs1 & rs2), f"x19 (AND) should be {rs1} & {rs2}"
+        assert dut.regfile_ra[x10].value.signed_integer == (rs1 + rs2), f"x10 (ADD) should be {rs1} + {rs2}"
+        assert dut.regfile_ra[x11].value.signed_integer == (rs1 - rs2), f"x11 (SUB) should be {rs1} - {rs2}"
+        assert dut.regfile_ra[x12].value.integer == ((rs1_u << (rs2 & 0x1F)) & U32_MAX), f"x12 (SLL) should be {rs1_u} << {(rs2 & 0x1F)}"
+        assert dut.regfile_ra[x13].value.signed_integer == (rs1 < rs2), f"x13 (SLT) should be {rs1} < {rs2}"
+        assert dut.regfile_ra[x14].value.signed_integer == (rs1_u < rs2_u), f"x14 (SLTU) should be {rs1_u} < {rs2_u}"
+        assert dut.regfile_ra[x15].value.signed_integer == (rs1 ^ rs2), f"x15 (XOR) should be {rs1} ^ {rs2}"
+        assert dut.regfile_ra[x16].value.integer == (rs1_u >> (rs2 & 0x1F)), f"x16 (SRL) should be {rs1_u} >> {(rs2 & 0x1F)}"
+        assert dut.regfile_ra[x17].value.signed_integer == (rs1 >> (rs2 & 0x1F)), f"x17 (SRA) should be {rs1} >> {(rs2 & 0x1F)}"
+        assert dut.regfile_ra[x18].value.signed_integer == (rs1 | rs2), f"x18 (OR) should be {rs1} | {rs2}"
+        assert dut.regfile_ra[x19].value.signed_integer == (rs1 & rs2), f"x19 (AND) should be {rs1} & {rs2}"
         print(f"rs1={rs1}, rs2={rs2}")
         print(f"rs1_u={rs1_u}, rs2_u={rs2_u}")
         raise TestSuccess("EBREAK")
@@ -263,15 +263,15 @@ async def test_itype(dut):
       dut._log.info(f"rdata={rdata}")
       if rdata == EBREAK():
         dut._log.info("reach EBREAK")
-        assert dut.rf_ra[x10].value.signed_integer == (rs1 + imm), f"x10 (ADD) should be {rs1} + {imm}"
-        assert dut.rf_ra[x12].value.integer == ((rs1_u << (imm & 0x1F)) & U32_MAX), f"x12 (SLL) should be {rs1_u} << {(imm & 0x1F)}"
-        assert dut.rf_ra[x13].value.signed_integer == (rs1 < imm), f"x13 (SLT) should be {rs1} < {imm}"
-        assert dut.rf_ra[x14].value.signed_integer == (rs1_u < imm_u), f"x14 (SLTU) should be {rs1_u} < {imm_u}"
-        assert dut.rf_ra[x15].value.signed_integer == (rs1 ^ imm), f"x15 (XOR) should be {rs1} ^ {imm}"
-        assert dut.rf_ra[x16].value.integer == (rs1_u >> (imm & 0x1F)), f"x16 (SRL) should be {rs1_u} >> {(imm & 0x1F)}"
-        assert dut.rf_ra[x17].value.signed_integer == (rs1 >> (imm & 0x1F)), f"x17 (SRA) should be {rs1} >> {(imm & 0x1F)}"
-        assert dut.rf_ra[x18].value.signed_integer == (rs1 | imm), f"x18 (OR) should be {rs1} | {imm}"
-        assert dut.rf_ra[x19].value.signed_integer == (rs1 & imm), f"x19 (AND) should be {rs1} & {imm}"
+        assert dut.regfile_ra[x10].value.signed_integer == (rs1 + imm), f"x10 (ADD) should be {rs1} + {imm}"
+        assert dut.regfile_ra[x12].value.integer == ((rs1_u << (imm & 0x1F)) & U32_MAX), f"x12 (SLL) should be {rs1_u} << {(imm & 0x1F)}"
+        assert dut.regfile_ra[x13].value.signed_integer == (rs1 < imm), f"x13 (SLT) should be {rs1} < {imm}"
+        assert dut.regfile_ra[x14].value.signed_integer == (rs1_u < imm_u), f"x14 (SLTU) should be {rs1_u} < {imm_u}"
+        assert dut.regfile_ra[x15].value.signed_integer == (rs1 ^ imm), f"x15 (XOR) should be {rs1} ^ {imm}"
+        assert dut.regfile_ra[x16].value.integer == (rs1_u >> (imm & 0x1F)), f"x16 (SRL) should be {rs1_u} >> {(imm & 0x1F)}"
+        assert dut.regfile_ra[x17].value.signed_integer == (rs1 >> (imm & 0x1F)), f"x17 (SRA) should be {rs1} >> {(imm & 0x1F)}"
+        assert dut.regfile_ra[x18].value.signed_integer == (rs1 | imm), f"x18 (OR) should be {rs1} | {imm}"
+        assert dut.regfile_ra[x19].value.signed_integer == (rs1 & imm), f"x19 (AND) should be {rs1} & {imm}"
         print(f"rs1={rs1}, imm={imm}")
         print(f"rs1_u={rs1_u}, imm_u={imm_u}")
         raise TestSuccess("EBREAK")
@@ -385,12 +385,12 @@ async def test_btype(dut):
       dut._log.info(f"rdata={rdata}")
       if rdata == EBREAK():
         dut._log.info("reach EBREAK")
-        assert dut.rf_ra[x10].value.integer == 1, f"x10 should be 1"
-        assert dut.rf_ra[x11].value.integer == 2, f"x11 should be 1"
-        assert dut.rf_ra[x12].value.integer == 3, f"x12 should be 3"
-        assert dut.rf_ra[x13].value.integer == 4, f"x13 should be 4"
-        assert dut.rf_ra[x14].value.integer == 5, f"x14 should be 5"
-        assert dut.rf_ra[x15].value.integer == 6, f"x15 should be 6"
+        assert dut.regfile_ra[x10].value.integer == 1, f"x10 should be 1"
+        assert dut.regfile_ra[x11].value.integer == 2, f"x11 should be 1"
+        assert dut.regfile_ra[x12].value.integer == 3, f"x12 should be 3"
+        assert dut.regfile_ra[x13].value.integer == 4, f"x13 should be 4"
+        assert dut.regfile_ra[x14].value.integer == 5, f"x14 should be 5"
+        assert dut.regfile_ra[x15].value.integer == 6, f"x15 should be 6"
         raise TestSuccess("EBREAK")
 
     mem_model[word_addr] = wdata_after_mask(mem_model[word_addr], wdata, wmask)
@@ -454,8 +454,8 @@ async def test_utype(dut):
       dut._log.info(f"rdata={rdata}")
       if rdata == EBREAK():
         dut._log.info("reach EBREAK")
-        assert dut.rf_ra[x1].value.signed_integer == c_int32(imm & 0xFFFF_F000).value, f"x1 (LUI) should be {c_int32(imm & 0xFFFF_F000).value}"
-        assert dut.rf_ra[x3].value.signed_integer == c_int32((imm & 0xFFFF_F000) + 8).value, f"x3 (AUIPC) should be {c_int32((imm & 0xFFFF_F000) + 8).value}"
+        assert dut.regfile_ra[x1].value.signed_integer == c_int32(imm & 0xFFFF_F000).value, f"x1 (LUI) should be {c_int32(imm & 0xFFFF_F000).value}"
+        assert dut.regfile_ra[x3].value.signed_integer == c_int32((imm & 0xFFFF_F000) + 8).value, f"x3 (AUIPC) should be {c_int32((imm & 0xFFFF_F000) + 8).value}"
         print(f"imm={imm}")
         raise TestSuccess("EBREAK")
 
@@ -538,23 +538,23 @@ async def test_load(dut):
       dut._log.info(f"rdata={rdata}")
       if rdata == EBREAK():
         dut._log.info("reach EBREAK")
-        assert dut.rf_ra[x1].value.signed_integer == c_int8(get_bitfield(imm, 7, 0)).value, f"x1 should be {c_int8(get_bitfield(imm, 7, 0)).value}"
-        assert dut.rf_ra[x2].value.signed_integer == c_int8(get_bitfield(imm, 15, 8)).value, f"x1 should be {c_int8(get_bitfield(imm, 15, 8)).value}"
-        assert dut.rf_ra[x3].value.signed_integer == c_int8(get_bitfield(imm, 23, 16)).value, f"x1 should be {c_int8(get_bitfield(imm, 23, 16)).value}"
-        assert dut.rf_ra[x4].value.signed_integer == c_int8(get_bitfield(imm, 31, 24)).value, f"x1 should be {c_int8(get_bitfield(imm, 31, 24)).value}"
+        assert dut.regfile_ra[x1].value.signed_integer == c_int8(get_bitfield(imm, 7, 0)).value, f"x1 should be {c_int8(get_bitfield(imm, 7, 0)).value}"
+        assert dut.regfile_ra[x2].value.signed_integer == c_int8(get_bitfield(imm, 15, 8)).value, f"x1 should be {c_int8(get_bitfield(imm, 15, 8)).value}"
+        assert dut.regfile_ra[x3].value.signed_integer == c_int8(get_bitfield(imm, 23, 16)).value, f"x1 should be {c_int8(get_bitfield(imm, 23, 16)).value}"
+        assert dut.regfile_ra[x4].value.signed_integer == c_int8(get_bitfield(imm, 31, 24)).value, f"x1 should be {c_int8(get_bitfield(imm, 31, 24)).value}"
 
-        assert dut.rf_ra[x5].value.signed_integer == c_int16(get_bitfield(imm, 15, 0)).value, f"x1 should be {c_int16(get_bitfield(imm, 15, 0)).value}"
-        assert dut.rf_ra[x6].value.signed_integer == c_int16(get_bitfield(imm, 31, 16)).value, f"x1 should be {c_int16(get_bitfield(imm, 31, 16)).value}"
+        assert dut.regfile_ra[x5].value.signed_integer == c_int16(get_bitfield(imm, 15, 0)).value, f"x1 should be {c_int16(get_bitfield(imm, 15, 0)).value}"
+        assert dut.regfile_ra[x6].value.signed_integer == c_int16(get_bitfield(imm, 31, 16)).value, f"x1 should be {c_int16(get_bitfield(imm, 31, 16)).value}"
 
-        assert dut.rf_ra[x7].value.signed_integer == c_int32(imm).value, f"x1 should be {c_int32(imm).value}"
+        assert dut.regfile_ra[x7].value.signed_integer == c_int32(imm).value, f"x1 should be {c_int32(imm).value}"
 
-        assert dut.rf_ra[x8].value.integer == c_uint8(get_bitfield(imm, 7, 0)).value, f"x1 should be {c_uint8(get_bitfield(imm, 7, 0)).value}"
-        assert dut.rf_ra[x9].value.integer == c_uint8(get_bitfield(imm, 15, 8)).value, f"x1 should be {c_uint8(get_bitfield(imm, 15, 8)).value}"
-        assert dut.rf_ra[x10].value.integer == c_uint8(get_bitfield(imm, 23, 16)).value, f"x1 should be {c_uint8(get_bitfield(imm, 23, 16)).value}"
-        assert dut.rf_ra[x11].value.integer == c_uint8(get_bitfield(imm, 31, 24)).value, f"x1 should be {c_uint8(get_bitfield(imm, 31, 24)).value}"
+        assert dut.regfile_ra[x8].value.integer == c_uint8(get_bitfield(imm, 7, 0)).value, f"x1 should be {c_uint8(get_bitfield(imm, 7, 0)).value}"
+        assert dut.regfile_ra[x9].value.integer == c_uint8(get_bitfield(imm, 15, 8)).value, f"x1 should be {c_uint8(get_bitfield(imm, 15, 8)).value}"
+        assert dut.regfile_ra[x10].value.integer == c_uint8(get_bitfield(imm, 23, 16)).value, f"x1 should be {c_uint8(get_bitfield(imm, 23, 16)).value}"
+        assert dut.regfile_ra[x11].value.integer == c_uint8(get_bitfield(imm, 31, 24)).value, f"x1 should be {c_uint8(get_bitfield(imm, 31, 24)).value}"
 
-        assert dut.rf_ra[x12].value.integer == c_uint16(get_bitfield(imm, 15, 0)).value, f"x1 should be {c_uint16(get_bitfield(imm, 15, 0)).value}"
-        assert dut.rf_ra[x13].value.integer == c_uint16(get_bitfield(imm, 31, 16)).value, f"x1 should be {c_uint16(get_bitfield(imm, 31, 16)).value}"
+        assert dut.regfile_ra[x12].value.integer == c_uint16(get_bitfield(imm, 15, 0)).value, f"x1 should be {c_uint16(get_bitfield(imm, 15, 0)).value}"
+        assert dut.regfile_ra[x13].value.integer == c_uint16(get_bitfield(imm, 31, 16)).value, f"x1 should be {c_uint16(get_bitfield(imm, 31, 16)).value}"
 
         print(f"imm={imm}")
         raise TestSuccess("EBREAK")

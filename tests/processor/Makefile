@@ -26,8 +26,8 @@ iverilog_dump.v:
 	echo 'initial begin' >> $@
 	echo '    $$dumpfile("$(TOPLEVEL).fst");' >> $@
 	echo '    $$dumpvars(0, $(TOPLEVEL));' >> $@
-	echo '    for(int i =0; i < 32; i = i + 1) begin' >> $@
-	echo '        $$dumpvars(0, $(TOPLEVEL).rf_ra[i]);' >> $@
+	echo '    for(int i =0; i < 31; i = i + 1) begin' >> $@
+	echo '        $$dumpvars(0, $(TOPLEVEL).regfile_ra[i]);' >> $@
 	echo '    end' >> $@
 	echo 'end' >> $@
 	echo 'endmodule' >> $@

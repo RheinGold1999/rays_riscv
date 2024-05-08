@@ -13,20 +13,20 @@ module processor (
 );
 
 // define register file
-reg [31:0] rf_ra[0:31];  // ra: reg array
+reg [31:0] regfile_ra[0:31];  // ra: reg array
 
 // ----------------------------------------------------------------------------
 // with reset the regfile is synthesized to SB_DFFESR and SB_LUT4
 // ----------------------------------------------------------------------------
 // genvar i;
 // generate
-//   for (i = 0; i < 32; i = i + 1) begin
+//   for (i = 0; i < 31; i = i + 1) begin
 //     always @(posedge clk_i) begin
 //       if (rst_i) begin
-//         rf_ra[i] <= 32'b0;
+//         regfile_ra[i] <= 32'b0;
 //       end
-//       else if ((wb_en_w) & (rd_id_w == i)) begin
-//         rf_ra[i] <= wb_data_w;
+//       else if ((wb_en_w) & (rd_id_w == (i))) begin
+//         regfile_ra[i] <= wb_data_w;
 //       end
 //     end
 //   end
@@ -38,12 +38,12 @@ reg [31:0] rf_ra[0:31];  // ra: reg array
 // integer i;
 // always @(posedge clk_i) begin
 //   if (rst_i) begin
-//     for (i = 0; i < 32; ++i) begin
-//       rf_ra[i] <= 32'b0;
+//     for (i = 0; i < 31; ++i) begin
+//       regfile_ra[i] <= 32'b0;
 //     end
 //   end
 //   else if (wb_en_w) begin
-//     rf_ra[rd_id_w] <= wb_data_w;
+//     regfile_ra[rd_id_w] <= wb_data_w;
 //   end
 // end
 
@@ -53,13 +53,13 @@ reg [31:0] rf_ra[0:31];  // ra: reg array
 integer i;
 initial begin
   for (i = 0; i < 32; i = i + 1) begin
-    rf_ra[i] = 0;
+    regfile_ra[i] = 0;
   end
 end
 
 always @(posedge clk_i) begin
   if (wb_en_w) begin
-    rf_ra[rd_id_w] <= wb_data_w;
+    regfile_ra[rd_id_w] <= wb_data_w;
   end
 end
 
@@ -68,7 +68,7 @@ end
 // ----------------------------------------------------------------------------
 // define state parameter
 localparam IF  = 0;
-localparam DEC = 1;
+localparam ID  = 1;
 localparam EXE = 2;
 localparam MEM = 3;
 localparam WB  = 4;
@@ -82,10 +82,10 @@ always @(posedge clk_i) begin
   else begin
     case (state_r)
       IF: begin
-        state_r <= DEC;
+        state_r <= ID;
         inst_r <= mem_rdata_i;
       end
-      DEC: begin
+      ID: begin
         state_r <= EXE;
       end
       EXE: begin
@@ -136,9 +136,9 @@ always @(posedge clk_i) begin
     rs1_r <= 32'b0;
     rs2_r <= 32'b0;
   end
-  else if (state_r == DEC) begin
-    rs1_r <= rf_ra[rs1_id_w];
-    rs2_r <= rf_ra[rs2_id_w];
+  else if (state_r == ID) begin
+    rs1_r <= regfile_ra[rs1_id_w];
+    rs2_r <= regfile_ra[rs2_id_w];
   end
 
 end
@@ -154,7 +154,7 @@ wire [31:0] Jimm_w = {{12{inst_r[31]}}, inst_r[19:12], inst_r[20], inst_r[30:21]
 
 // debug only
 always @(posedge clk_i) begin
-  if (state_r == DEC) begin
+  if (state_r == ID) begin
     case (1'b1)
       is_alu_reg_w: $display("[%t ps]: rd[%d] <- rs1[%d] OP rs2[%d]", $realtime, rd_id_w, rs1_id_w, rs2_id_w);
       is_alu_imm_w: $display("[%t ps]: rd[%d] <- rs1[%d] OP Iimm(%h)", $realtime, rd_id_w, rs1_id_w, Iimm_w);
