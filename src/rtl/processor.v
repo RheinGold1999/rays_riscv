@@ -1,6 +1,6 @@
-// `resetall
+`resetall
 `timescale 1ns / 1ps
-// `default_nettype none
+`default_nettype none
 
 module processor (
   input         clk_i,

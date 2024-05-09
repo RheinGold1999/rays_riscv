@@ -5,7 +5,7 @@
 
 module memory #(
   parameter SIZE = 4 * 1024 * 1024,
-  parameter ADDR_WIDTH = $clog2(SIZE)
+  localparam ADDR_WIDTH = $clog2(SIZE)
 )(
   input                   clk_i,
   input                   rst_i,

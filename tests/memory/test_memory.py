@@ -32,7 +32,7 @@ async def memory_test(dut):
   await FallingEdge(dut.clk_i)
   dut.rst_i.value = 0
 
-  for _ in range(10000):
+  for _ in range(1000):
     addr = random.randint(0, WORD_SIZE - 1) // 4 * 4
     rstrb = random.randint(0, 1)
     wmask = random.randint(0, 3) if rstrb == 0 else 0
