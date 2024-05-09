@@ -2,6 +2,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+`include "define.v"
 `include "processor.v"
 `include "memory.v"
 `include "uart.v"
@@ -50,7 +51,7 @@ wire [3:0]  ram_wmask_w;
 wire [31:0] ram_wdata_w;
 
 memory #(
-  .SIZE(4 * 1024 * 1024)
+  .SIZE(`MEM_SIZE)
 ) u_memory(
   .clk_i(clk_i),
   .rst_i(rst_i),
@@ -68,7 +69,10 @@ wire [31:0] uart_rdata_w;
 wire [3:0]  uart_wmask_w;
 wire [31:0] uart_wdata_w;
 
-uart u_uart(
+uart u_uart #(
+  .IO_CTRL_BIT(`IO_CTRL_BIT),
+  .UART_CTRL_BIT(`UART_CTRL_BIT)
+)(
   .clk_i(clk_i),
   .rst_i(rst_i),
   .mem_addr_i(uart_addr_w),
