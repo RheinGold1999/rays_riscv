@@ -4,6 +4,7 @@
 
 `include "processor.v"
 `include "memory.v"
+`include "uart.v"
 
 module soc (
   input clk_i,
