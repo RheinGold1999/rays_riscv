@@ -191,15 +191,6 @@ wire [31:0] alu_in2_w = (
 
 wire [4:0] sh_amt_w = is_alu_reg_w ? rs2_r[4:0] : Iimm_w[4:0];
 
-wire is_alu_calc_sub_w = (
-  (funct3_w == 3'b000 & funct7_w[5] & inst_r[5]) |
-  (funct3_w == 3'b010) |
-  (funct3_w == 3'b011) |
-  (is_branch_w)
-);
-wire [32:0] add2_w = is_alu_calc_sub_w ? {1'b1, ~alu_in2_w} : {1'b0, alu_in2_w};
-wire carry_w = is_alu_calc_sub_w ? 1'b1 : 1'b0;
-
 wire [31:0] alu_add_w = alu_in1_w + alu_in2_w;
 wire [32:0] alu_sub_w = {1'b0, alu_in1_w} + {1'b1, ~alu_in2_w} + 33'b1;
 wire [31:0] alu_ltu_w = {31'b0, alu_sub_w[32]};

@@ -18,25 +18,27 @@ U32_MAX = 0xFFFF_FFFF
 
 # @cocotb.coroutine
 def load_bin_to_memory(dut, bin_file):
+  print(f"type of dut.u_memory.MEM[0].value: {type(dut.u_memory.MEM[0].value)}")
   with open(bin_file, mode='rb') as file:
     data = file.read()
-    print(f"data size = {len(data)}")
-    print(f"data type = {type(data)}")
     word = 0
     for i, byte in enumerate(data):
       if i % 4 == 0:
         word = byte
       word |= byte << ((i % 4) * 8)
       if i % 4 == 3 or i == (len(data) - 1):
-        dut.u_memory.MEM[i//4].value = word
-        # dut._log.info(f"{i//4}-th word: {word:#x}")
+        dut.u_memory.MEM[i//4].value.assign(word)
+        # if word:
+          # dut._log.info(f"{i//4}-th word: {dut.u_memory.MEM:#x}")
+    # for i in range(100):
+    #   dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value}")
       
 
 
 @cocotb.test()
 async def test_soc(dut):
-  bin_file = "../software/hello_world/main.bin"
-  load_bin_to_memory(dut, bin_file)
+  # bin_file = "../software/hello_world/main.bin"
+  # load_bin_to_memory(dut, bin_file)
 
   # # raise TestSuccess("bypass")
 

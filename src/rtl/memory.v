@@ -1,10 +1,11 @@
-
 `resetall
 `timescale 1ns / 1ps
 `default_nettype none
 
+`include "define.v"
+
 module memory #(
-  parameter SIZE = MEM_SIZE,
+  parameter SIZE = `MEM_SIZE,
   localparam ADDR_WIDTH = $clog2(SIZE)
 )(
   input         clk,
@@ -59,5 +60,12 @@ always @(posedge clk) begin
 end
 
 assign mem_rdata_o = mem_rdata_r;
+
+initial begin
+  $readmemb("/mnt/e/code/HDL/rays_riscv/tests/software/hello_world/main.bin", MEM);
+  for (int i = 0; i < 100; i = i + 1) begin
+    $display("MEM[%d]=%h", i, MEM[i]);
+  end
+end
 
 endmodule
