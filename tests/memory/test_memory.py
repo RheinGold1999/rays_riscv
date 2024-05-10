@@ -23,14 +23,14 @@ async def memory_test(dut):
   mem_model = [0] * WORD_SIZE
   # raise TestSuccess("bypass")
 
-  clock = Clock(dut.clk_i, 10, 'ns')
+  clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))
 
   # reset
-  dut.rst_i.value = 1
+  dut.rst.value = 1
   await Timer(20, units='ns')
-  await FallingEdge(dut.clk_i)
-  dut.rst_i.value = 0
+  await FallingEdge(dut.clk)
+  dut.rst.value = 0
 
   for _ in range(1000):
     addr = random.randint(0, WORD_SIZE - 1) // 4 * 4
@@ -60,7 +60,7 @@ async def memory_test(dut):
 
     dut.mem_rstrb_i.value = rstrb
     # now write is done
-    await FallingEdge(dut.clk_i)
+    await FallingEdge(dut.clk)
 
     if rstrb:
       assert dut.mem_rdata_o.value == ori_data, f"data mismatch at address: {addr:#x}"

@@ -3,8 +3,8 @@
 `default_nettype none
 
 module processor (
-  input         clk_i,
-  input         rst_i,
+  input         clk,
+  input         rst,
   output [31:0] mem_addr_o,
   output        mem_rstrb_o,
   input  [31:0] mem_rdata_i,
@@ -21,8 +21,8 @@ reg [31:0] regfile_ra[0:31];  // ra: reg array
 // genvar i;
 // generate
 //   for (i = 0; i < 31; i = i + 1) begin
-//     always @(posedge clk_i) begin
-//       if (rst_i) begin
+//     always @(posedge clk) begin
+//       if (rst) begin
 //         regfile_ra[i] <= 32'b0;
 //       end
 //       else if ((wb_en_w) & (rd_id_w == (i))) begin
@@ -36,8 +36,8 @@ reg [31:0] regfile_ra[0:31];  // ra: reg array
 // with reset the regfile is synthesized to SB_DFFESR and SB_LUT4
 // ----------------------------------------------------------------------------
 // integer i;
-// always @(posedge clk_i) begin
-//   if (rst_i) begin
+// always @(posedge clk) begin
+//   if (rst) begin
 //     for (i = 0; i < 31; ++i) begin
 //       regfile_ra[i] <= 32'b0;
 //     end
@@ -57,7 +57,7 @@ initial begin
   end
 end
 
-always @(posedge clk_i) begin
+always @(posedge clk) begin
   if (wb_en_w) begin
     regfile_ra[rd_id_w] <= wb_data_w;
   end
@@ -74,8 +74,8 @@ localparam MEM = 3;
 localparam WB  = 4;
 
 reg [2:0] state_r;
-always @(posedge clk_i) begin
-  if (rst_i) begin
+always @(posedge clk) begin
+  if (rst) begin
     state_r <= IF;
     inst_r <= 32'b0;
   end
@@ -131,8 +131,8 @@ wire [4:0] rd_id_w  = inst_r[11:7];
 
 reg [31:0] rs1_r;
 reg [31:0] rs2_r;
-always @(posedge clk_i) begin
-  if (rst_i) begin
+always @(posedge clk) begin
+  if (rst) begin
     rs1_r <= 32'b0;
     rs2_r <= 32'b0;
   end
@@ -153,7 +153,7 @@ wire [31:0] Bimm_w = {{20{inst_r[31]}}, inst_r[7], inst_r[30:25], inst_r[11:8], 
 wire [31:0] Jimm_w = {{12{inst_r[31]}}, inst_r[19:12], inst_r[20], inst_r[30:21], 1'b0};
 
 // debug only
-always @(posedge clk_i) begin
+always @(posedge clk) begin
   if (state_r == ID) begin
     case (1'b1)
       is_alu_reg_w: $display("[%t ps]: rd[%d] <- rs1[%d] OP rs2[%d]", $realtime, rd_id_w, rs1_id_w, rs2_id_w);
@@ -166,7 +166,7 @@ always @(posedge clk_i) begin
       is_load_w:    $display("[%t ps]: rd[%d] <- MEM[rs1[%d] + Iimm(%h)]", $realtime, rd_id_w, rs1_id_w, Iimm_w);
       is_store_w:   $display("[%t ps]: MEM[rs1[%d] + Simm(%h)] <- rs2", $realtime, rs1_id_w, Simm_w);
       is_system_w:  $display("[%t ps]: special", $realtime);
-      default:      $display("[%t ps]: wrong instruction(%h)", $realtime, inst_r);
+      // default:      $display("[%t ps]: wrong instruction(%h)", $realtime, inst_r);
     endcase
   end
 end
@@ -307,8 +307,8 @@ wire [31:0] next_pc_add2_w = (
 wire [31:0] next_pc_w = next_pc_add1_w + next_pc_add2_w;
 
 reg [31:0] pc_r;
-always @(posedge clk_i) begin
-  if (rst_i) begin
+always @(posedge clk) begin
+  if (rst) begin
     pc_r <= 32'b0;
   end
   else if (state_r == WB) begin
@@ -323,8 +323,8 @@ wire [31:0] load_ori_addr_w = rs1_r + Iimm_w;
 wire [31:0] load_word_addr_w = {load_ori_addr_w[31:2], 2'b0};
 
 reg [31:0] load_ori_data_r;
-always @(posedge clk_i) begin
-  if (rst_i) begin
+always @(posedge clk) begin
+  if (rst) begin
     load_ori_data_r <= 32'b0;
   end
   else if (state_r == MEM & is_load_w) begin

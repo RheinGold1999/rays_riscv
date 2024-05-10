@@ -4,16 +4,16 @@
 `default_nettype none
 
 module memory #(
-  parameter SIZE = 4 * 1024 * 1024,
+  parameter SIZE = MEM_SIZE,
   localparam ADDR_WIDTH = $clog2(SIZE)
 )(
-  input                   clk_i,
-  input                   rst_i,
-  input  [ADDR_WIDTH-1:0] mem_addr_i,
-  input                   mem_rstrb_i,
-  output [31:0]           mem_rdata_o,
-  input  [3:0]            mem_wmask_i,
-  input  [31:0]           mem_wdata_i
+  input         clk,
+  input         rst,
+  input  [31:0] mem_addr_i,
+  input         mem_rstrb_i,
+  output [31:0] mem_rdata_o,
+  input  [3:0]  mem_wmask_i,
+  input  [31:0] mem_wdata_i
 );
 
 initial begin
@@ -27,8 +27,8 @@ localparam DEPTH = SIZE / 4;
 reg [31:0] MEM[0:DEPTH-1];
 wire [ADDR_WIDTH-3:0] word_addr_w = mem_addr_i[ADDR_WIDTH-1:2];
 
-always @(posedge clk_i) begin
-  if (rst_i) begin
+always @(posedge clk) begin
+  if (rst) begin
     for (int i = 0; i < DEPTH; i = i + 1) begin
       MEM[i] <= 32'h0000_0000;
     end
@@ -50,8 +50,8 @@ always @(posedge clk_i) begin
 end
 
 reg [31:0] mem_rdata_r;
-always @(posedge clk_i) begin
-  if (rst_i) begin
+always @(posedge clk) begin
+  if (rst) begin
     mem_rdata_r <= 32'b0;
   end else if (mem_rstrb_i) begin
     mem_rdata_r <= MEM[word_addr_w];

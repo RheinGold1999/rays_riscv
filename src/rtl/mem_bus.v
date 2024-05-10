@@ -22,7 +22,7 @@ module mem_bus (
   output        uart_rstrb_o,
   input  [31:0] uart_rdata_i,
   output [3:0]  uart_wmask_o,
-  output [31:0] uart_wdata_o,
+  output [31:0] uart_wdata_o
 );
 
 wire is_io_w = cpu_addr_i[22];

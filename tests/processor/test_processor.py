@@ -66,13 +66,13 @@ async def test_loop(dut):
   mem_model[0:inst_size] = instructions
 
   # clock
-  clock = Clock(dut.clk_i, 10, 'ns')
+  clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))
   # reset
-  dut.rst_i.value = 1
+  dut.rst.value = 1
   await Timer(20, units='ns')
-  await FallingEdge(dut.clk_i)
-  dut.rst_i.value = 0
+  await FallingEdge(dut.clk)
+  dut.rst.value = 0
   
   for _ in range(500):
     addr = dut.mem_addr_o.value
@@ -101,7 +101,7 @@ async def test_loop(dut):
     if word_addr > inst_size:
       assert False, "reach memory limit"
 
-    await FallingEdge(dut.clk_i)
+    await FallingEdge(dut.clk)
 
   assert False, "not reach EBREAK"
 
@@ -146,13 +146,13 @@ async def test_rtype(dut):
   mem_model[0:inst_size] = instructions
 
   # clock
-  clock = Clock(dut.clk_i, 10, 'ns')
+  clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))
   # reset
-  dut.rst_i.value = 1
+  dut.rst.value = 1
   await Timer(20, units='ns')
-  await FallingEdge(dut.clk_i)
-  dut.rst_i.value = 0
+  await FallingEdge(dut.clk)
+  dut.rst.value = 0
   
   for _ in range(500):
     addr = dut.mem_addr_o.value
@@ -192,7 +192,7 @@ async def test_rtype(dut):
     if word_addr > inst_size:
       assert False, "reach memory limit"
 
-    await FallingEdge(dut.clk_i)
+    await FallingEdge(dut.clk)
 
   assert False, "not reach EBREAK"
 
@@ -236,13 +236,13 @@ async def test_itype(dut):
   mem_model[0:inst_size] = instructions
 
   # clock
-  clock = Clock(dut.clk_i, 10, 'ns')
+  clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))
   # reset
-  dut.rst_i.value = 1
+  dut.rst.value = 1
   await Timer(20, units='ns')
-  await FallingEdge(dut.clk_i)
-  dut.rst_i.value = 0
+  await FallingEdge(dut.clk)
+  dut.rst.value = 0
   
   for _ in range(500):
     addr = dut.mem_addr_o.value
@@ -281,7 +281,7 @@ async def test_itype(dut):
     if word_addr > inst_size:
       assert False, "reach memory limit"
 
-    await FallingEdge(dut.clk_i)
+    await FallingEdge(dut.clk)
 
   assert False, "not reach EBREAK"
 
@@ -358,13 +358,13 @@ async def test_btype(dut):
   mem_model[0:inst_size] = instructions
 
   # clock
-  clock = Clock(dut.clk_i, 10, 'ns')
+  clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))
   # reset
-  dut.rst_i.value = 1
+  dut.rst.value = 1
   await Timer(20, units='ns')
-  await FallingEdge(dut.clk_i)
-  dut.rst_i.value = 0
+  await FallingEdge(dut.clk)
+  dut.rst.value = 0
   
   for _ in range(500):
     addr = dut.mem_addr_o.value
@@ -398,7 +398,7 @@ async def test_btype(dut):
     if word_addr > inst_size:
       assert False, "reach memory limit"
 
-    await FallingEdge(dut.clk_i)
+    await FallingEdge(dut.clk)
 
   assert False, "not reach EBREAK"
 
@@ -427,13 +427,13 @@ async def test_utype(dut):
   mem_model[0:inst_size] = instructions
 
   # clock
-  clock = Clock(dut.clk_i, 10, 'ns')
+  clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))
   # reset
-  dut.rst_i.value = 1
+  dut.rst.value = 1
   await Timer(20, units='ns')
-  await FallingEdge(dut.clk_i)
-  dut.rst_i.value = 0
+  await FallingEdge(dut.clk)
+  dut.rst.value = 0
   
   for _ in range(500):
     addr = dut.mem_addr_o.value
@@ -464,7 +464,7 @@ async def test_utype(dut):
     if word_addr > inst_size:
       assert False, "reach memory limit"
 
-    await FallingEdge(dut.clk_i)
+    await FallingEdge(dut.clk)
 
   assert False, "not reach EBREAK"
 
@@ -511,13 +511,13 @@ async def test_load(dut):
   mem_model[0:inst_size] = instructions
 
   # clock
-  clock = Clock(dut.clk_i, 10, 'ns')
+  clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))
   # reset
-  dut.rst_i.value = 1
+  dut.rst.value = 1
   await Timer(20, units='ns')
-  await FallingEdge(dut.clk_i)
-  dut.rst_i.value = 0
+  await FallingEdge(dut.clk)
+  dut.rst.value = 0
   
   for _ in range(500):
     addr = dut.mem_addr_o.value
@@ -564,7 +564,7 @@ async def test_load(dut):
     if word_addr > inst_size:
       assert False, "reach memory limit"
 
-    await FallingEdge(dut.clk_i)
+    await FallingEdge(dut.clk)
 
   assert False, "not reach EBREAK"
 
@@ -631,13 +631,13 @@ async def test_store(dut):
   mem_model[0:inst_size] = instructions
 
   # clock
-  clock = Clock(dut.clk_i, 10, 'ns')
+  clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))
   # reset
-  dut.rst_i.value = 1
+  dut.rst.value = 1
   await Timer(20, units='ns')
-  await FallingEdge(dut.clk_i)
-  dut.rst_i.value = 0
+  await FallingEdge(dut.clk)
+  dut.rst.value = 0
   
   for _ in range(500):
     addr = dut.mem_addr_o.value
@@ -687,7 +687,7 @@ async def test_store(dut):
     if word_addr > inst_size:
       assert False, "reach memory limit"
 
-    await FallingEdge(dut.clk_i)
+    await FallingEdge(dut.clk)
 
   assert False, "not reach EBREAK"
 
