@@ -61,11 +61,4 @@ end
 
 assign mem_rdata_o = mem_rdata_r;
 
-initial begin
-  $readmemb("/mnt/e/code/HDL/rays_riscv/tests/software/hello_world/main.bin", MEM);
-  for (int i = 0; i < 100; i = i + 1) begin
-    $display("MEM[%d]=%h", i, MEM[i]);
-  end
-end
-
 endmodule

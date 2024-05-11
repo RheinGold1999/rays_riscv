@@ -6,7 +6,7 @@ VERILOG_SOURCES = $(shell pwd)/../../src/rtl/soc.v
 COMPILE_ARGS += -I$(shell pwd)/../../src/rtl/
 TOPLEVEL = soc
 MODULE = test_soc
-MEM_INIT_FILE = /mnt/e/code/HDL/rays_riscv/tests/software/hello_world/main.bin
+MEM_INIT_FILE = /mnt/e/code/HDL/rays_riscv/tests/software/hello_world/main.word.txt
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst
@@ -34,18 +34,13 @@ iverilog_dump.v:
 	echo '  end' >> $@
 	echo 'end' >> $@
 	echo '' >> $@
-	# echo 'initial begin' >> $@
-	# echo '  $$readmemb("$(MEM_INIT_FILE)", $(TOPLEVEL).u_memory.MEM);' >> $@
-	# echo '  for (int i = 0; i < 100; i = i + 1) begin' >> $@
-	# echo '    $$display("MEM[%d]=%h", i, $(TOPLEVEL).u_memory.MEM[i]);' >> $@
-	# echo '  end' >> $@
-	# echo 'end' >> $@
-	echo 'endmodule' >> $@
-
-memory_init.v:
-	echo 'module memory_init();' > $@
 	echo 'initial begin' >> $@
-	echo ''
+	echo '  $$readmemh("$(MEM_INIT_FILE)", $(TOPLEVEL).u_memory.MEM);' >> $@
+	echo '  for (int i = 0; i < 100; i = i + 1) begin' >> $@
+	echo '    $$display("MEM[%d]=%h", i, $(TOPLEVEL).u_memory.MEM[i]);' >> $@
+	echo '  end' >> $@
+	echo 'end' >> $@
+	echo 'endmodule' >> $@
 
 clean::
 	@rm -rf iverilog_dump.v

@@ -1,3 +1,6 @@
+main.word.txt: main.bin
+		../bin2word.py main.bin main.word.txt
+
 main.bin: main.elf
 		riscv64-unknown-elf-objcopy -O binary main.elf main.bin
 
