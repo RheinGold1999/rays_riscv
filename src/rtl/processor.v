@@ -156,17 +156,17 @@ wire [31:0] Jimm_w = {{12{inst_r[31]}}, inst_r[19:12], inst_r[20], inst_r[30:21]
 always @(posedge clk) begin
   if (state_r == ID) begin
     case (1'b1)
-      is_alu_reg_w: $display("[%t ps]: rd[%d] <- rs1[%d] OP rs2[%d]", $realtime, rd_id_w, rs1_id_w, rs2_id_w);
-      is_alu_imm_w: $display("[%t ps]: rd[%d] <- rs1[%d] OP Iimm(%h)", $realtime, rd_id_w, rs1_id_w, Iimm_w);
-      is_branch_w:  $display("[%t ps]: if(rs1[%d] OP rs2[%d]) PC <- PC(%d) + Bimm(%h)", $realtime, rs1_id_w, rs2_id_w, pc_r, Bimm_w);
-      is_jalr_w:    $display("[%t ps]: rd[%d] <- PC(%d) + 4; PC <- rs1[%d] + Iimm(%h)", $realtime, rd_id_w, pc_r, rs1_id_w, Iimm_w);
-      is_jal_w:     $display("[%t ps]: rd[%d] <- PC(%d) + 4; PC <- PC + Jimm(%h)", $realtime, rd_id_w, pc_r, Jimm_w);
-      is_auipc_w:   $display("[%t ps]: rd[%d] <- PC(%d) + Uimm(%h)", $realtime, rd_id_w, pc_r, Uimm_w);
-      is_lui_w:     $display("[%t ps]: rd[%d] <- Uimm(%h)", $realtime, rd_id_w, Uimm_w);
-      is_load_w:    $display("[%t ps]: rd[%d] <- MEM[rs1[%d] + Iimm(%h)]", $realtime, rd_id_w, rs1_id_w, Iimm_w);
-      is_store_w:   $display("[%t ps]: MEM[rs1[%d] + Simm(%h)] <- rs2", $realtime, rs1_id_w, Simm_w);
-      is_system_w:  $display("[%t ps]: special", $realtime);
-      // default:      $display("[%t ps]: wrong instruction(%h)", $realtime, inst_r);
+      is_alu_reg_w: $display("[%t ps][CPU ]: rd[%d] <- rs1[%d] OP rs2[%d]", $realtime, rd_id_w, rs1_id_w, rs2_id_w);
+      is_alu_imm_w: $display("[%t ps][CPU ]: rd[%d] <- rs1[%d] OP Iimm(%h)", $realtime, rd_id_w, rs1_id_w, Iimm_w);
+      is_branch_w:  $display("[%t ps][CPU ]: if(rs1[%d] OP rs2[%d]) PC <- PC(%d) + Bimm(%h)", $realtime, rs1_id_w, rs2_id_w, pc_r, Bimm_w);
+      is_jalr_w:    $display("[%t ps][CPU ]: rd[%d] <- PC(%d) + 4; PC <- rs1[%d] + Iimm(%h)", $realtime, rd_id_w, pc_r, rs1_id_w, Iimm_w);
+      is_jal_w:     $display("[%t ps][CPU ]: rd[%d] <- PC(%d) + 4; PC <- PC + Jimm(%h)", $realtime, rd_id_w, pc_r, Jimm_w);
+      is_auipc_w:   $display("[%t ps][CPU ]: rd[%d] <- PC(%d) + Uimm(%h)", $realtime, rd_id_w, pc_r, Uimm_w);
+      is_lui_w:     $display("[%t ps][CPU ]: rd[%d] <- Uimm(%h)", $realtime, rd_id_w, Uimm_w);
+      is_load_w:    $display("[%t ps][CPU ]: rd[%d] <- MEM[rs1[%d] + Iimm(%h)]", $realtime, rd_id_w, rs1_id_w, Iimm_w);
+      is_store_w:   $display("[%t ps][CPU ]: MEM[rs1[%d] + Simm(%h)] <- rs2[%d]", $realtime, rs1_id_w, Simm_w, rs2_id_w);
+      is_system_w:  $display("[%t ps][CPU ]: special", $realtime);
+      default:      $display("[%t ps][CPU ]: other instruction(%h)", $realtime, inst_r);
     endcase
   end
 end
@@ -405,18 +405,17 @@ wire [31:0] wb_data_w = (
 // Output Interface
 // ----------------------------------------------------------------------------
 assign mem_addr_o = (
-  (state_r == IF) ? pc_r :
-  (state_r == MEM) ? (is_load_w ? load_word_addr_w : store_word_addr_w) :
+  (state_r == EXE) ? (is_load_w ? load_word_addr_w : store_word_addr_w) :
   pc_r
 );
 
 assign mem_rstrb_o = (
-  (state_r == IF) |
-  (state_r == MEM & is_load_w)
+  (state_r == WB) |
+  (state_r == EXE & is_load_w)
 );
 
 assign mem_wmask_o = (
-  ((state_r == MEM) & (is_store_w)) ? store_mask_w :
+  ((state_r == EXE) & (is_store_w)) ? store_mask_w :
   4'b0000
 );
 

@@ -15,6 +15,7 @@ main.S: main.c
 
 objdump: main.elf
 		riscv64-unknown-elf-objdump -d main.elf > main.dump
+		riscv64-unknown-elf-objdump -d -M no-aliases,numeric main.elf > main.ori.dump
 
 clean::
 		@rm -fr *.o

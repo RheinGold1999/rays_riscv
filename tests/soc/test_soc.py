@@ -27,21 +27,14 @@ def load_bin_to_memory(dut, bin_file):
         word = byte
       word |= byte << ((i % 4) * 8)
       if i % 4 == 3 or i == (len(data) - 1):
-        dut.u_memory.MEM[i//4].value.assign(word)
-        # if word:
-          # dut._log.info(f"{i//4}-th word: {dut.u_memory.MEM:#x}")
-    # for i in range(100):
-    #   dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value}")
-      
+        dut.u_memory.MEM[i//4].value = word
+        if word:
+          dut._log.info(f"{i//4}-th word: {word:#x}")
 
 
 @cocotb.test()
 async def test_soc(dut):
-  # bin_file = "../software/hello_world/main.bin"
-  # load_bin_to_memory(dut, bin_file)
-
-  # # raise TestSuccess("bypass")
-
+  # raise TestSuccess("bypass")
   clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))
 
@@ -50,6 +43,19 @@ async def test_soc(dut):
   await Timer(20, units='ns')
   await FallingEdge(dut.clk)
   dut.rst.value = 0
+
+  # initialize PROGROM and DATARAM
+  bin_file = "../software/hello_world/main.bin"
+  load_bin_to_memory(dut, bin_file)
+
+  # set CPU SP(x2)
+  dut.u_cpu.regfile_ra[2].value = (MEM_SIZE - 16)
+
+  await FallingEdge(dut.clk)
+
+  for i in range(WORD_SIZE):
+    if dut.u_memory.MEM[i].value.integer:
+      dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value.integer:#x}")
 
   for _ in range(1000):
   #   addr = random.randint(0, WORD_SIZE - 1) // 4 * 4

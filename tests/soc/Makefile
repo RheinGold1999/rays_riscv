@@ -6,7 +6,7 @@ VERILOG_SOURCES = $(shell pwd)/../../src/rtl/soc.v
 COMPILE_ARGS += -I$(shell pwd)/../../src/rtl/
 TOPLEVEL = soc
 MODULE = test_soc
-MEM_INIT_FILE = /mnt/e/code/HDL/rays_riscv/tests/software/hello_world/main.word.txt
+MEM_INIT_FILE = $(shell pwd)/../software/hello_world/main.word.txt
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst
@@ -16,7 +16,6 @@ ifeq ($(SIM), icarus)
 	endif
 else ifeq ($(SIM), verilator)
 	COMPILE_ARGS += -Wno-SELRANGE -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-BLKLOOPINIT 
-	COMPLIE_ARGS += iverilog_dump.v
 	ifeq ($(WAVES), 1)
 		COMPILE_ARGS += --trace-fst -trace-threads 2 
 	endif
@@ -24,7 +23,9 @@ endif
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
-iverilog_dump.v:
+MEM_WORD_SIZE = 1024 * 1024
+
+iverilog_dump.v: $(MEM_INIT_FILE)
 	echo 'module iverilog_dump();' > $@
 	echo 'initial begin' >> $@
 	echo '  $$dumpfile("$(TOPLEVEL).fst");' >> $@
@@ -34,12 +35,17 @@ iverilog_dump.v:
 	echo '  end' >> $@
 	echo 'end' >> $@
 	echo '' >> $@
-	echo 'initial begin' >> $@
-	echo '  $$readmemh("$(MEM_INIT_FILE)", $(TOPLEVEL).u_memory.MEM);' >> $@
-	echo '  for (int i = 0; i < 100; i = i + 1) begin' >> $@
-	echo '    $$display("MEM[%d]=%h", i, $(TOPLEVEL).u_memory.MEM[i]);' >> $@
-	echo '  end' >> $@
-	echo 'end' >> $@
+
+	# echo 'initial begin' >> $@
+	# echo '  $$readmemh("$(MEM_INIT_FILE)", $(TOPLEVEL).u_memory.MEM);' >> $@
+	# echo '  for (int i = 0; i < $(MEM_WORD_SIZE); i = i + 1) begin' >> $@
+	# echo '    if ($(TOPLEVEL).u_memory.MEM[i] != 0) begin' >> $@
+	# echo '      $$display("MEM[%d]=%h", i, $(TOPLEVEL).u_memory.MEM[i]);' >> $@
+	# echo '      $$dumpvars(0, $(TOPLEVEL).u_memory.MEM[i]);' >> $@
+	# echo '    end' >> $@
+	# echo '  end' >> $@
+	# echo 'end' >> $@
+
 	echo 'endmodule' >> $@
 
 clean::
