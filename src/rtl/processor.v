@@ -155,7 +155,7 @@ wire [31:0] Jimm_w = {{12{inst_r[31]}}, inst_r[19:12], inst_r[20], inst_r[30:21]
 // Instruction Monitor (debug only)
 // ----------------------------------------------------------------------------
 always @(posedge clk) begin
-  if (state_r == ID) begin
+  if (state_r == EXE) begin
     case (1'b1)
       is_alu_reg_w: begin
         // $display("[%t ps][CPU ]: rd[%d] <- rs1[%d] OP rs2[%d]", $realtime, rd_id_w, rs1_id_w, rs2_id_w);
