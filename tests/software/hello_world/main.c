@@ -6,7 +6,7 @@ int main()
   const char message[] = "Hello, World!\n";
   const char* msg_p = message;
   char* uart_addr = (char*)(IO_BASE | IO_UART);
-  while (msg_p) {
+  while (*msg_p) {
     // print to UART
     *uart_addr = *msg_p;
     msg_p++;

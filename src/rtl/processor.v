@@ -140,7 +140,6 @@ always @(posedge clk) begin
     rs1_r <= regfile_ra[rs1_id_w];
     rs2_r <= regfile_ra[rs2_id_w];
   end
-
 end
 
 wire [2:0] funct3_w = inst_r[14:12];
@@ -152,21 +151,118 @@ wire [31:0] Simm_w = {{21{inst_r[31]}}, inst_r[30:25], inst_r[11:7]};
 wire [31:0] Bimm_w = {{20{inst_r[31]}}, inst_r[7], inst_r[30:25], inst_r[11:8], 1'b0};
 wire [31:0] Jimm_w = {{12{inst_r[31]}}, inst_r[19:12], inst_r[20], inst_r[30:21], 1'b0};
 
-// debug only
+// ----------------------------------------------------------------------------
+// Instruction Monitor (debug only)
+// ----------------------------------------------------------------------------
 always @(posedge clk) begin
   if (state_r == ID) begin
     case (1'b1)
-      is_alu_reg_w: $display("[%t ps][CPU ]: rd[%d] <- rs1[%d] OP rs2[%d]", $realtime, rd_id_w, rs1_id_w, rs2_id_w);
-      is_alu_imm_w: $display("[%t ps][CPU ]: rd[%d] <- rs1[%d] OP Iimm(%h)", $realtime, rd_id_w, rs1_id_w, Iimm_w);
-      is_branch_w:  $display("[%t ps][CPU ]: if(rs1[%d] OP rs2[%d]) PC <- PC(%d) + Bimm(%h)", $realtime, rs1_id_w, rs2_id_w, pc_r, Bimm_w);
-      is_jalr_w:    $display("[%t ps][CPU ]: rd[%d] <- PC(%d) + 4; PC <- rs1[%d] + Iimm(%h)", $realtime, rd_id_w, pc_r, rs1_id_w, Iimm_w);
-      is_jal_w:     $display("[%t ps][CPU ]: rd[%d] <- PC(%d) + 4; PC <- PC + Jimm(%h)", $realtime, rd_id_w, pc_r, Jimm_w);
-      is_auipc_w:   $display("[%t ps][CPU ]: rd[%d] <- PC(%d) + Uimm(%h)", $realtime, rd_id_w, pc_r, Uimm_w);
-      is_lui_w:     $display("[%t ps][CPU ]: rd[%d] <- Uimm(%h)", $realtime, rd_id_w, Uimm_w);
-      is_load_w:    $display("[%t ps][CPU ]: rd[%d] <- MEM[rs1[%d] + Iimm(%h)]", $realtime, rd_id_w, rs1_id_w, Iimm_w);
-      is_store_w:   $display("[%t ps][CPU ]: MEM[rs1[%d] + Simm(%h)] <- rs2[%d]", $realtime, rs1_id_w, Simm_w, rs2_id_w);
-      is_system_w:  $display("[%t ps][CPU ]: special", $realtime);
-      default:      $display("[%t ps][CPU ]: other instruction(%h)", $realtime, inst_r);
+      is_alu_reg_w: begin
+        // $display("[%t ps][CPU ]: rd[%d] <- rs1[%d] OP rs2[%d]", $realtime, rd_id_w, rs1_id_w, rs2_id_w);
+        case (funct3_w)
+          3'b000: begin
+            if (funct7_w[5]) begin
+              $display("[%t ps][CPU ]: SUB rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+            end
+            else begin
+              $display("[%t ps][CPU ]: ADD rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+            end
+          end
+          3'b001: $display("[%t ps][CPU ]: SLL rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+          3'b010: $display("[%t ps][CPU ]: SLT rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+          3'b011: $display("[%t ps][CPU ]: SLTU rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+          3'b100: $display("[%t ps][CPU ]: XOR rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+          3'b101: begin
+            if (funct7_w[5]) begin
+              $display("[%t ps][CPU ]: SRA rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+            end
+            else begin
+              $display("[%t ps][CPU ]: SRL rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+            end
+          end
+          3'b110: $display("[%t ps][CPU ]: OR rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+          3'b111: $display("[%t ps][CPU ]: AND rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
+        endcase
+      end
+      is_alu_imm_w: begin
+        // $display("[%t ps][CPU ]: rd[%d] <- rs1[%d] OP Iimm(%h)", $realtime, rd_id_w, rs1_id_w, Iimm_w);
+        case (funct3_w)
+          3'b000: $display("[%t ps][CPU ]: ADDI rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b001: $display("[%t ps][CPU ]: SLLI rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b010: $display("[%t ps][CPU ]: SLTI rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b011: $display("[%t ps][CPU ]: SLTUI rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b100: $display("[%t ps][CPU ]: XORI rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b101: begin
+            if (funct7_w[5]) begin
+              $display("[%t ps][CPU ]: SRAI rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+            end
+            else begin
+              $display("[%t ps][CPU ]: SRLI rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+            end
+          end
+          3'b110: $display("[%t ps][CPU ]: ORI rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b111: $display("[%t ps][CPU ]: ANDI rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+        endcase
+      end
+      is_branch_w: begin
+        // $display("[%t ps][CPU ]: if(rs1[%d] OP rs2[%d]) PC <- PC(%d) + Bimm(%h)", $realtime, rs1_id_w, rs2_id_w, pc_r, Bimm_w);
+        case (funct3_w)
+          3'b000: $display("[%t ps][CPU ]: BEQ rs1[%d](%h), rs2[%d](%h), Bimm(%h)", $realtime, rs1_id_w, rs1_r, rs2_id_w, rs2_r, Bimm_w);
+          3'b001: $display("[%t ps][CPU ]: BNE rs1[%d](%h), rs2[%d](%h), Bimm(%h)", $realtime, rs1_id_w, rs1_r, rs2_id_w, rs2_r, Bimm_w);
+          3'b100: $display("[%t ps][CPU ]: BLT rs1[%d](%h), rs2[%d](%h), Bimm(%h)", $realtime, rs1_id_w, rs1_r, rs2_id_w, rs2_r, Bimm_w);
+          3'b101: $display("[%t ps][CPU ]: BGE rs1[%d](%h), rs2[%d](%h), Bimm(%h)", $realtime, rs1_id_w, rs1_r, rs2_id_w, rs2_r, Bimm_w);
+          3'b110: $display("[%t ps][CPU ]: BLTU rs1[%d](%h), rs2[%d](%h), Bimm(%h)", $realtime, rs1_id_w, rs1_r, rs2_id_w, rs2_r, Bimm_w);
+          3'b111: $display("[%t ps][CPU ]: BGEU rs1[%d](%h), rs2[%d](%h), Bimm(%h)", $realtime, rs1_id_w, rs1_r, rs2_id_w, rs2_r, Bimm_w);
+          default: $display("[%t ps][CPU ]: Wrong Branch, check funct3: x[%d](%h), x[%d](%h), Bimm(%h)", $realtime, rs1_id_w, rs1_r, rs2_id_w, rs2_r, Bimm_w);
+        endcase
+      end
+      is_jalr_w: begin
+        // $display("[%t ps][CPU ]: rd[%d] <- PC(%d) + 4; PC <- rs1[%d] + Iimm(%h)", $realtime, rd_id_w, pc_r, rs1_id_w, Iimm_w);
+        $display("[%t ps][CPU ]: JALR rd[%d](%h), rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, (pc_r + 4), rs1_id_w, rs1_r, Iimm_w);
+      end
+      is_jal_w: begin
+        // $display("[%t ps][CPU ]: rd[%d] <- PC(%d) + 4; PC <- PC + Jimm(%h)", $realtime, rd_id_w, pc_r, Jimm_w);
+        $display("[%t ps][CPU ]: JAL rd[%d](%h), Jimm(%h)", $realtime, rd_id_w, (pc_r + 4), Jimm_w);
+      end
+      is_auipc_w: begin
+        // $display("[%t ps][CPU ]: rd[%d] <- PC(%d) + Uimm(%h)", $realtime, rd_id_w, pc_r, Uimm_w);
+        $display("[%t ps][CPU ]: AUIPC rd[%d], Uimm(%h)", $realtime, rd_id_w, Uimm_w);
+      end
+      is_lui_w: begin
+        // $display("[%t ps][CPU ]: rd[%d] <- Uimm(%h)", $realtime, rd_id_w, Uimm_w);
+        $display("[%t ps][CPU ]: LUI rd[%d], Uimm(%h)", $realtime, rd_id_w, Uimm_w);
+      end
+      is_load_w: begin
+        // $display("[%t ps][CPU ]: rd[%d] <- MEM[rs1[%d] + Iimm(%h)]", $realtime, rd_id_w, rs1_id_w, Iimm_w);
+        case (funct3_w)
+          3'b000: $display("[%t ps][CPU ]: LB rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b001: $display("[%t ps][CPU ]: LH rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b010: $display("[%t ps][CPU ]: LW rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b100: $display("[%t ps][CPU ]: LBU rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          3'b101: $display("[%t ps][CPU ]: LHU rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+          default: $display("[%t ps][CPU ]: Wrong Load, check funct3: rd[%d], rs1[%d](%h), Iimm(%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, Iimm_w);
+        endcase
+      end
+      is_store_w: begin
+        // $display("[%t ps][CPU ]: MEM[rs1[%d] + Simm(%h)] <- rs2[%d]", $realtime, rs1_id_w, Simm_w, rs2_id_w);
+        case (funct3_w)
+          3'b000: $display("[%t ps][CPU ]: SB rs2[%d](%h), rs1[%d](%h), Simm(%h)", $realtime, rs2_id_w, rs2_r, rs1_id_w, rs1_r, Simm_w);
+          3'b001: $display("[%t ps][CPU ]: SH rs2[%d](%h), rs1[%d](%h), Simm(%h)", $realtime, rs2_id_w, rs2_r, rs1_id_w, rs1_r, Simm_w);
+          3'b010: $display("[%t ps][CPU ]: SW rs2[%d](%h), rs1[%d](%h), Simm(%h)", $realtime, rs2_id_w, rs2_r, rs1_id_w, rs1_r, Simm_w);
+          default: $display("[%t ps][CPU ]: Wrong Store, check funct3: rs2[%d](%h), rs1[%d](%h), Iimm(%h)", $realtime, rs2_id_w, rs2_r, rs1_id_w, rs1_r, Simm_w);
+        endcase
+      end
+      is_system_w: begin
+        case (inst_r[20])
+          1'b0: $display("[%t ps][CPU ]: ECALL(%h)", $realtime, inst_r);
+          1'b1: begin
+            $display("[%t ps][CPU ]: EBREAK(%h)", $realtime, inst_r);
+            $finish();
+          end
+          default: $display("[%t ps][CPU ]: System Instruction(%h)", $realtime, inst_r);
+        endcase
+      end
+      default: $display("[%t ps][CPU ]: other instruction(%h)", $realtime, inst_r);
     endcase
   end
 end

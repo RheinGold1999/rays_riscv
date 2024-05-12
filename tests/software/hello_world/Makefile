@@ -1,4 +1,4 @@
-main.word.txt: main.bin
+main.word.txt: main.bin objdump
 		../bin2word.py main.bin main.word.txt
 
 main.bin: main.elf
