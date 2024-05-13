@@ -501,7 +501,11 @@ wire [31:0] wb_data_w = (
 // Output Interface
 // ----------------------------------------------------------------------------
 assign mem_addr_o = (
-  (state_r == EXE) ? (is_load_w ? load_word_addr_w : store_word_addr_w) :
+  (state_r == EXE) ? (
+    is_load_w ? load_word_addr_w :
+    is_store_w ? store_word_addr_w :
+    pc_r
+  ) :
   pc_r
 );
 
