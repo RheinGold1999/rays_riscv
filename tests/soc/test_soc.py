@@ -57,7 +57,7 @@ async def test_soc(dut):
     if dut.u_memory.MEM[i].value.integer:
       dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value.integer:#x}")
 
-  for _ in range(500):
+  for _ in range(1000):
     await FallingEdge(dut.clk)
   #   if rstrb:
   #     assert dut.mem_rdata_o.value == ori_data, f"data mismatch at address: {addr:#x}"

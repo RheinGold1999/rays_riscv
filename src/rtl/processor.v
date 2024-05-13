@@ -76,7 +76,7 @@ localparam WB  = 4;
 reg [2:0] state_r;
 always @(posedge clk) begin
   if (rst) begin
-    state_r <= IF;
+    state_r <= WB;
     inst_r <= 32'b0;
   end
   else begin
@@ -103,7 +103,7 @@ always @(posedge clk) begin
         state_r <= IF;
       end
       default: begin
-        state_r <= IF;
+        state_r <= WB;
       end 
     endcase
   end
@@ -398,7 +398,7 @@ always @(posedge clk) begin
   if (rst) begin
     pc_r <= 32'b0;
   end
-  else if (state_r == WB) begin
+  else if (state_r == EXE) begin
     pc_r <= next_pc_w;
   end
 end
