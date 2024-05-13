@@ -257,7 +257,7 @@ always @(posedge clk) begin
           1'b0: $display("[%t ps][CPU ]: ECALL(%h)", $realtime, inst_r);
           1'b1: begin
             $display("[%t ps][CPU ]: EBREAK(%h)", $realtime, inst_r);
-            $finish();
+            // $finish();
           end
           default: $display("[%t ps][CPU ]: System Instruction(%h)", $realtime, inst_r);
         endcase

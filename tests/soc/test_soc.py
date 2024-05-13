@@ -1,7 +1,6 @@
 # import os
 # import sys
 import random
-# from pathlib import Path
 
 import cocotb
 from cocotb.clock import Clock
@@ -9,6 +8,7 @@ from cocotb.triggers import Timer, RisingEdge, FallingEdge
 from cocotb.result import TestSuccess
 # from cocotb_tools.runner import get_runner
 
+from riscv_assembler import *
 
 MEM_SIZE = 4 * 1024 * 1024
 assert MEM_SIZE % 4 == 0, "MEM_SIZE should be multiple of 4"
@@ -48,18 +48,28 @@ async def test_soc(dut):
   bin_file = "../software/hello_world/main.bin"
   load_bin_to_memory(dut, bin_file)
 
-  # set CPU SP(x2)
+  # set CPU SP(x2, stack pointer)
   dut.u_cpu.regfile_ra[2].value = (MEM_SIZE - 16)
+
+  # set CPU RA(x1, return address)
+  dut.u_cpu.regfile_ra[1].value = (MEM_SIZE - 4)
+  # set the content of RA to EBREAK
+  dut.u_memory.MEM[WORD_SIZE - 1].value = EBREAK()
 
   await FallingEdge(dut.clk)
 
+  # 
   for i in range(WORD_SIZE):
     if dut.u_memory.MEM[i].value.integer:
       dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value.integer:#x}")
 
-  for _ in range(1000):
+  tick_limit = 1000
+  for _ in range(tick_limit):
     await FallingEdge(dut.clk)
-  #   if rstrb:
-  #     assert dut.mem_rdata_o.value == ori_data, f"data mismatch at address: {addr:#x}"
+    if (dut.u_cpu.state_r.value == 4 and 
+        dut.u_cpu.inst_r.value == EBREAK()):
+      raise TestSuccess("sim done")
+  
+  assert False, f"reach tick_limit={tick_limit}"
 
 
