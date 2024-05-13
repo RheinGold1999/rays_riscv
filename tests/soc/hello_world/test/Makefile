@@ -2,11 +2,10 @@ SIM ?= icarus
 WAVES ?= 1
 
 TOPLEVEL_LANG = verilog
-VERILOG_SOURCES = $(shell pwd)/../../src/rtl/soc.v
-COMPILE_ARGS += -I$(shell pwd)/../../src/rtl/
+VERILOG_SOURCES = $(shell pwd)/../../../../src/rtl/soc.v
+COMPILE_ARGS += -I$(shell pwd)/../../../../src/rtl/
 TOPLEVEL = soc
 MODULE = test_soc
-MEM_INIT_FILE = $(shell pwd)/../software/hello_world/main.word.txt
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst
@@ -25,7 +24,7 @@ include $(shell cocotb-config --makefiles)/Makefile.sim
 
 MEM_WORD_SIZE = 1024 * 1024
 
-iverilog_dump.v: $(MEM_INIT_FILE)
+iverilog_dump.v:
 	echo 'module iverilog_dump();' > $@
 	echo 'initial begin' >> $@
 	echo '  $$dumpfile("$(TOPLEVEL).fst");' >> $@
@@ -35,19 +34,10 @@ iverilog_dump.v: $(MEM_INIT_FILE)
 	echo '  end' >> $@
 	echo 'end' >> $@
 	echo '' >> $@
-
-	# echo 'initial begin' >> $@
-	# echo '  $$readmemh("$(MEM_INIT_FILE)", $(TOPLEVEL).u_memory.MEM);' >> $@
-	# echo '  for (int i = 0; i < $(MEM_WORD_SIZE); i = i + 1) begin' >> $@
-	# echo '    if ($(TOPLEVEL).u_memory.MEM[i] != 0) begin' >> $@
-	# echo '      $$display("MEM[%d]=%h", i, $(TOPLEVEL).u_memory.MEM[i]);' >> $@
-	# echo '      $$dumpvars(0, $(TOPLEVEL).u_memory.MEM[i]);' >> $@
-	# echo '    end' >> $@
-	# echo '  end' >> $@
-	# echo 'end' >> $@
-
 	echo 'endmodule' >> $@
 
 clean::
 	@rm -rf iverilog_dump.v
 	@rm -rf dump.fst $(TOPLEVEL).fst
+	@rm -rf *.log
+	@rm -rf *.xml

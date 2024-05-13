@@ -19,4 +19,7 @@ objdump: main.elf
 
 clean::
 		@rm -fr *.o
+		@rm -fr *.S
 		@rm -fr *.elf
+		@rm -fr *.dump
+		@rm -fr *.bin

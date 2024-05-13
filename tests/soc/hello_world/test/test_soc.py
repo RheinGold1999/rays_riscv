@@ -1,5 +1,5 @@
 # import os
-# import sys
+import sys
 import random
 
 import cocotb
@@ -8,6 +8,7 @@ from cocotb.triggers import Timer, RisingEdge, FallingEdge
 from cocotb.result import TestSuccess
 # from cocotb_tools.runner import get_runner
 
+sys.path.append("../../")
 from riscv_assembler import *
 
 MEM_SIZE = 4 * 1024 * 1024
@@ -45,7 +46,7 @@ async def test_soc(dut):
   dut.rst.value = 0
 
   # initialize PROGROM and DATARAM
-  bin_file = "../software/hello_world/main.bin"
+  bin_file = "../src/main.bin"
   load_bin_to_memory(dut, bin_file)
 
   # set CPU SP(x2, stack pointer)
