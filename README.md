@@ -1,2 +1,2 @@
 # rays_riscv
-it is a simple repo for my study of RISC-V
+It is a simple repo for personal study of RISC-V, inspired by @BrunoLevy learn-fpga
