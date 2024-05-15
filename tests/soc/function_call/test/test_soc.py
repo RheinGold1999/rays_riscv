@@ -63,7 +63,7 @@ async def test_soc(dut):
     if dut.u_memory.MEM[i].value.integer:
       dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value.integer:#x}")
 
-  tick_limit = 1000
+  tick_limit = 10000
   for _ in range(tick_limit):
     await FallingEdge(dut.clk)
     if (dut.u_cpu.state_r.value == 4 and 

@@ -13,20 +13,6 @@ module soc (
   input rst
 );
 
-// reg clk;
-// reg rst;
-
-// always begin
-//   #5 clk = ~clk;
-// end
-
-// initial begin
-//   clk = 1;
-//   rst = 1;
-//   #15
-//   rst = 0; 
-// end
-
 // CPU
 wire [31:0] cpu_addr_w;
 wire        cpu_rstrb_w;

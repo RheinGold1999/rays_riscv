@@ -324,6 +324,22 @@ always @(*) begin
   endcase
 end
 
+reg [31:0] alu_out_r;
+always @(posedge clk) begin
+  if (rst) begin
+    alu_out_r <= 32'b0;
+  end
+  else if (state_r == EXE) begin
+    if (is_alu_reg_w | is_alu_imm_w) begin
+      alu_out_r <= alu_out_w;
+    end
+    else begin
+      alu_out_r <= alu_add_w;
+    end
+  end
+  
+end
+
 // ----------------------------------------------------------------------------
 // Branch
 // ----------------------------------------------------------------------------
@@ -491,11 +507,7 @@ wire wb_en_w = (
   )
 );
 
-wire [31:0] wb_data_w = (
-  (is_load_w) ? load_data_w : 
-  (is_alu_reg_w | is_alu_imm_w) ? alu_out_w :
-  alu_add_w
-);
+wire [31:0] wb_data_w = is_load_w ? load_data_w : alu_out_r;
 
 // ----------------------------------------------------------------------------
 // Output Interface

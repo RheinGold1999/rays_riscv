@@ -11,5 +11,6 @@ int main()
     *uart_addr = *msg_p;
     msg_p++;
   }
+  asm volatile ("ebreak");
   return 0;
 }
