@@ -50,7 +50,7 @@ async def test_soc(dut):
   load_bin_to_memory(dut, bin_file)
 
   # set CPU SP(x2, stack pointer)
-  dut.u_cpu.regfile_ra[2].value = (MEM_SIZE - 16)
+  # dut.u_cpu.regfile_ra[2].value = (MEM_SIZE - 16)
 
   # # set CPU RA(x1, return address)
   # dut.u_cpu.regfile_ra[1].value = (MEM_SIZE - 4)
@@ -64,10 +64,16 @@ async def test_soc(dut):
       dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value.integer:#x}")
 
   tick_limit = 10000
+  uart_output = ""
+  uart_expect = "Hello, RISC-V! Let's do something interesting."
   for _ in range(tick_limit):
     await FallingEdge(dut.clk)
+    if dut.u_uart.mem_wmask_i.value & 0x1:
+      uart_output += chr(dut.u_uart.mem_wdata_i.value & 0xFF)
     if (dut.u_cpu.state_r.value == 4 and 
         dut.u_cpu.inst_r.value == EBREAK()):
+      assert uart_output == uart_expect, \
+        f"uart_output({uart_output}) should be `{uart_expect}`"
       raise TestSuccess("sim done")
   
   assert False, f"reach tick_limit={tick_limit}"

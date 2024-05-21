@@ -20,7 +20,10 @@ wire [31:0] cpu_rdata_w;
 wire [3:0]  cpu_wmask_w;
 wire [31:0] cpu_wdata_w;
 
-processor u_cpu (
+processor #(
+  .PC_BASE_ADDR(`CPU_PC_BASE_ADDR),
+  .SP_BASE_ADDR(`CPU_SP_BASE_ADDR)
+) u_cpu (
   .clk(clk),
   .rst(rst),
   .mem_addr_o(cpu_addr_w),

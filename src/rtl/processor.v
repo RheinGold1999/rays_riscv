@@ -1,8 +1,13 @@
+`include "define.v"
+
 `resetall
 `timescale 1ns / 1ps
 `default_nettype none
 
-module processor (
+module processor #(
+  parameter [31:0] PC_BASE_ADDR = `CPU_PC_BASE_ADDR,
+  parameter [31:0] SP_BASE_ADDR = `CPU_SP_BASE_ADDR
+)(
   input         clk,
   input         rst,
   output [31:0] mem_addr_o,
@@ -55,6 +60,7 @@ initial begin
   for (i = 0; i < 32; i = i + 1) begin
     regfile_ra[i] = 0;
   end
+  regfile_ra[`sp] = SP_BASE_ADDR;
 end
 
 always @(posedge clk) begin
@@ -412,7 +418,7 @@ wire [31:0] next_pc_w = next_pc_add1_w + next_pc_add2_w;
 reg [31:0] pc_r;
 always @(posedge clk) begin
   if (rst) begin
-    pc_r <= 32'b0;
+    pc_r <= PC_BASE_ADDR;
   end
   else if (state_r == EXE) begin
     pc_r <= next_pc_w;

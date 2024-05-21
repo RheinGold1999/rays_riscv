@@ -8,7 +8,7 @@ int main()
 {
   const char hi[] = "Hello, RISC-V! Let's do something interesting.";
   print_str(hi);
-  asm volatile ("ebreak");
+  __asm__ volatile ("ebreak");
   return 0;
 }
 

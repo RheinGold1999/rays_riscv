@@ -50,7 +50,7 @@ async def test_soc(dut):
   load_bin_to_memory(dut, bin_file)
 
   # set CPU SP(x2, stack pointer)
-  dut.u_cpu.regfile_ra[2].value = (MEM_SIZE - 16)
+  # dut.u_cpu.regfile_ra[2].value = (MEM_SIZE - 16)
 
   # # set CPU RA(x1, return address)
   # dut.u_cpu.regfile_ra[1].value = (MEM_SIZE - 4)
