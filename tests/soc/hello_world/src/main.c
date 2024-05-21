@@ -3,7 +3,7 @@
 
 int main()
 {
-  const char message[] = "Hello, World!\n";
+  const char message[] = "Hello, World!";
   const char* msg_p = message;
   char* uart_addr = (char*)(IO_BASE | IO_UART);
   while (*msg_p) {
@@ -11,6 +11,6 @@ int main()
     *uart_addr = *msg_p;
     msg_p++;
   }
-  asm volatile ("ebreak");
+  __asm__ volatile ("ebreak");
   return 0;
 }

@@ -64,10 +64,14 @@ async def test_soc(dut):
       dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value.integer:#x}")
 
   tick_limit = 1000
+  uart_output = ""
   for _ in range(tick_limit):
     await FallingEdge(dut.clk)
+    if dut.u_uart.mem_wmask_i.value & 0x1:
+      uart_output += chr(dut.u_uart.mem_wdata_i.value & 0xFF)
     if (dut.u_cpu.state_r.value == 4 and 
         dut.u_cpu.inst_r.value == EBREAK()):
+      assert uart_output == "Hello, World!", f"uart_output({uart_output}) should be `Hello, World!`"
       raise TestSuccess("sim done")
   
   assert False, f"reach tick_limit={tick_limit}"
