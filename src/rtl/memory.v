@@ -1,8 +1,8 @@
+`include "define.v"
+
 `resetall
 `timescale 1ns / 1ps
 `default_nettype none
-
-`include "define.v"
 
 module memory #(
   parameter SIZE = `MEM_SIZE,
@@ -47,7 +47,7 @@ always @(posedge clk) begin
       MEM[word_addr_w][31:24] <= mem_wdata_i[31:24];
     end
     if (|mem_wmask_i) begin
-      $display("[%t ps][MEM ]: addr=%h, wdata=%h, wmask=%b", $realtime, mem_addr_i, mem_wdata_i, mem_wmask_i);
+      $display("[%0t ps][MEM ]: addr=%h, wdata=%h, wmask=%b", $realtime, mem_addr_i, mem_wdata_i, mem_wmask_i);
     end
   end
 end
@@ -58,7 +58,7 @@ always @(posedge clk) begin
     mem_rdata_r <= 32'b0;
   end else if (mem_rstrb_i) begin
     mem_rdata_r <= MEM[word_addr_w];
-    $display("[%t ps][MEM ]: addr=%h, rdata=%h", $realtime, mem_addr_i, mem_rdata_o);
+    $display("[%0t ps][MEM ]: addr=%h, rdata=%h", $realtime, mem_addr_i, mem_rdata_o);
   end
 end
 
