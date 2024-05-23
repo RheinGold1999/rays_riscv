@@ -65,7 +65,7 @@ async def test_soc(dut):
 
   tick_limit = 10000
   uart_output = ""
-  uart_expect = "Hello, RISC-V! Let's do something interesting."
+  uart_expect = "Hello, RISC-V!"
   for _ in range(tick_limit):
     await FallingEdge(dut.clk)
     if dut.u_uart.mem_wmask_i.value & 0x1:

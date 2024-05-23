@@ -6,7 +6,7 @@ void print_str(const char* msg);
 
 int main()
 {
-  const char hi[] = "Hello, RISC-V! Let's do something interesting.";
+  const char hi[] = "Hello, RISC-V!";
   print_str(hi);
   __asm__ volatile ("ebreak");
   return 0;
