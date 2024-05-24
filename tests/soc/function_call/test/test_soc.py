@@ -63,10 +63,13 @@ async def test_soc(dut):
     if dut.u_memory.MEM[i].value.integer:
       dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value.integer:#x}")
 
-  tick_limit = 10000
+  tick_limit = 100000
   uart_output = ""
-  uart_expect = "Hello, RISC-V!"
-  for _ in range(tick_limit):
+  uart_string = "Hello, RISC-V!"
+  uart_dec = "1234"
+  uart_hex = "1234ABCD"
+  uart_expect = uart_string + uart_dec + uart_hex
+  for cyc in range(tick_limit):
     await FallingEdge(dut.clk)
     if dut.u_uart.mem_wmask_i.value & 0x1:
       uart_output += chr(dut.u_uart.mem_wdata_i.value & 0xFF)
@@ -74,6 +77,7 @@ async def test_soc(dut):
         dut.u_cpu.inst_r.value == EBREAK()):
       assert uart_output == uart_expect, \
         f"uart_output({uart_output}) should be `{uart_expect}`"
+      print(f"uses {cyc + 1} cycles")
       raise TestSuccess("sim done")
   
   assert False, f"reach tick_limit={tick_limit}"

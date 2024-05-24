@@ -3,6 +3,9 @@ MEMORY {
     DATARAM (RX) : ORIGIN = 0x100000, LENGTH = 0x100000   /* 2MB RAM*/
 }
 
+/* ENTRY(main) */
+ENTRY(print_str)
+
 SECTIONS {
     .text : {
         . = ALIGN(4);

@@ -4,8 +4,8 @@ main.word.txt: main.bin objdump
 main.bin: main.elf
 		riscv64-unknown-elf-objcopy -O binary main.elf main.bin
 
-main.elf: main.o
-		riscv64-unknown-elf-ld -T linker.ld -m elf32lriscv -nostdlib -no-relax main.o -o main.elf
+main.elf: main.o print.o linker.ld
+		riscv64-unknown-elf-ld -T linker.ld -m elf32lriscv -nostdlib -no-relax main.o print.o -o main.elf
 
 main.o: main.S
 		riscv64-unknown-elf-as -march=rv32i -mabi=ilp32 -mno-relax main.S -o main.o
@@ -16,6 +16,15 @@ main.S: main.c
 objdump: main.elf
 		riscv64-unknown-elf-objdump -d main.elf > main.dump
 		riscv64-unknown-elf-objdump -d -M no-aliases,numeric main.elf > main.ori.dump
+
+# print.o: print.c
+# 		riscv64-unknown-elf-gcc -c print.c -o print.o -march=rv32i -mabi=ilp32  -nostdlib -mno-relax
+
+print.o: print.S
+		riscv64-unknown-elf-as -march=rv32i -mabi=ilp32 -mno-relax print.S -o print.o
+
+print.S: print.c
+		riscv64-unknown-elf-gcc -S print.c -o print.S -march=rv32i -mabi=ilp32  -nostdlib -mno-relax
 
 clean::
 		@rm -fr *.o
