@@ -29,8 +29,7 @@ reg [31:0] regfile_ra[0:31];  // ra: reg array
 //     always @(posedge clk) begin
 //       if (rst) begin
 //         regfile_ra[i] <= 32'b0;
-//       end
-//       else if ((wb_en_w) & (rd_id_w == (i))) begin
+//       end else if ((wb_en_w) & (rd_id_w == (i))) begin
 //         regfile_ra[i] <= wb_data_w;
 //       end
 //     end
@@ -46,8 +45,7 @@ reg [31:0] regfile_ra[0:31];  // ra: reg array
 //     for (i = 0; i < 31; ++i) begin
 //       regfile_ra[i] <= 32'b0;
 //     end
-//   end
-//   else if (wb_en_w) begin
+//   end else if (wb_en_w) begin
 //     regfile_ra[rd_id_w] <= wb_data_w;
 //   end
 // end
@@ -83,13 +81,10 @@ reg [2:0] state_r;
 always @(posedge clk) begin
   if (rst) begin
     state_r <= WB;
-    inst_r <= 32'b0;
-  end
-  else begin
+  end else begin
     case (state_r)
       IF: begin
         state_r <= ID;
-        inst_r <= mem_rdata_i;
       end
       ID: begin
         state_r <= EXE;
@@ -97,8 +92,7 @@ always @(posedge clk) begin
       EXE: begin
         if (is_load_w | is_store_w) begin
           state_r <= MEM;
-        end
-        else begin
+        end else begin
           state_r <= WB;
         end
       end
@@ -119,6 +113,14 @@ end
 // Instruction Decoder
 // ----------------------------------------------------------------------------
 reg [31:0] inst_r;
+always @(posedge clk) begin
+  if (rst) begin
+    inst_r <= 32'b0;
+  end else if (state_r == IF) begin
+    inst_r <= mem_rdata_i;
+  end
+  
+end
 
 wire is_alu_reg_w = inst_r[6:0] == 7'b011_0011;   // rd <- rs1 OP rs2
 wire is_alu_imm_w = inst_r[6:0] == 7'b001_0011;   // rd <- rs1 OP Iimm
@@ -141,8 +143,7 @@ always @(posedge clk) begin
   if (rst) begin
     rs1_r <= 32'b0;
     rs2_r <= 32'b0;
-  end
-  else if (state_r == ID) begin
+  end else if (state_r == ID) begin
     rs1_r <= regfile_ra[rs1_id_w];
     rs2_r <= regfile_ra[rs2_id_w];
   end
@@ -169,8 +170,7 @@ always @(posedge clk) begin
           3'b000: begin
             if (funct7_w[5]) begin
               $display("[%0t ps][CPU ]: SUB rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
-            end
-            else begin
+            end else begin
               $display("[%0t ps][CPU ]: ADD rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
             end
           end
@@ -181,8 +181,7 @@ always @(posedge clk) begin
           3'b101: begin
             if (funct7_w[5]) begin
               $display("[%0t ps][CPU ]: SRA rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
-            end
-            else begin
+            end else begin
               $display("[%0t ps][CPU ]: SRL rd[%d], rs1[%d](%h), rs2[%d](%h)", $realtime, rd_id_w, rs1_id_w, rs1_r, rs2_id_w, rs2_r);
             end
           end
@@ -201,8 +200,7 @@ always @(posedge clk) begin
           3'b101: begin
             if (funct7_w[5]) begin
               $display("[%0t ps][CPU ]: SRAI rd[%d], rs1[%d](%h), Iimm(%0d)", $realtime, rd_id_w, rs1_id_w, rs1_r, $signed(Iimm_w));
-            end
-            else begin
+            end else begin
               $display("[%0t ps][CPU ]: SRLI rd[%d], rs1[%d](%h), Iimm(%0d)", $realtime, rd_id_w, rs1_id_w, rs1_r, $signed(Iimm_w));
             end
           end
@@ -335,12 +333,10 @@ reg [31:0] alu_out_r;
 always @(posedge clk) begin
   if (rst) begin
     alu_out_r <= 32'b0;
-  end
-  else if (state_r == EXE) begin
+  end else if (state_r == EXE) begin
     if (is_alu_reg_w | is_alu_imm_w) begin
       alu_out_r <= alu_out_w;
-    end
-    else begin
+    end else begin
       alu_out_r <= alu_add_w;
     end
   end
@@ -419,8 +415,7 @@ reg [31:0] pc_r;
 always @(posedge clk) begin
   if (rst) begin
     pc_r <= PC_BASE_ADDR;
-  end
-  else if (state_r == EXE) begin
+  end else if (state_r == EXE) begin
     pc_r <= next_pc_w;
   end
 end
@@ -435,8 +430,7 @@ reg [31:0] load_ori_data_r;
 always @(posedge clk) begin
   if (rst) begin
     load_ori_data_r <= 32'b0;
-  end
-  else if (state_r == MEM & is_load_w) begin
+  end else if (state_r == MEM & is_load_w) begin
     load_ori_data_r <= mem_rdata_i;
   end
 end
