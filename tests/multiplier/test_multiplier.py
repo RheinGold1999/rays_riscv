@@ -27,8 +27,8 @@ async def memory_test(dut):
   op1 = 2
   # op2 = random.randint(0, 0xFFFF_FFFF)
   op2 = 7
-  dut.op1_i.value = op1
-  dut.op2_i.value = op2
+  dut.mul1_i.value = op1
+  dut.mul2_i.value = op2
 
   while dut.rdy_o.value == 0:
     await FallingEdge(dut.clk)
@@ -38,8 +38,8 @@ async def memory_test(dut):
   
   op1 = 4
   op2 = 2
-  dut.op1_i.value = op1
-  dut.op2_i.value = op2
+  dut.mul1_i.value = op1
+  dut.mul2_i.value = op2
 
   await FallingEdge(dut.clk)
 
@@ -57,8 +57,8 @@ async def memory_test(dut):
   op1 = 3
   # op2 = random.randint(0, 0xFFFF_FFFF)
   op2 = 3
-  dut.op1_i.value = op1
-  dut.op2_i.value = op2
+  dut.mul1_i.value = op1
+  dut.mul2_i.value = op2
 
   while dut.rdy_o.value == 0:
     await FallingEdge(dut.clk)
@@ -75,8 +75,8 @@ async def memory_test(dut):
   op1 = 0 
   # op2 = random.randint(0, 0xFFFF_FFFF)
   op2 = 3
-  dut.op1_i.value = op1
-  dut.op2_i.value = op2
+  dut.mul1_i.value = op1
+  dut.mul2_i.value = op2
 
   while dut.rdy_o.value == 0:
     await FallingEdge(dut.clk)
@@ -92,8 +92,8 @@ async def memory_test(dut):
   op1 = 3 
   # op2 = random.randint(0, 0xFFFF_FFFF)
   op2 = 0
-  dut.op1_i.value = op1
-  dut.op2_i.value = op2
+  dut.mul1_i.value = op1
+  dut.mul2_i.value = op2
 
   while dut.rdy_o.value == 0:
     await FallingEdge(dut.clk)
@@ -103,8 +103,8 @@ async def memory_test(dut):
 
   op1 = random.randint(0, 0xFFFF_FFFF)
   op2 = random.randint(0, 0xFFFF_FFFF)
-  dut.op1_i.value = op1
-  dut.op2_i.value = op2
+  dut.mul1_i.value = op1
+  dut.mul2_i.value = op2
 
   await FallingEdge(dut.clk)
 

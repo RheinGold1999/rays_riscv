@@ -1,12 +1,17 @@
 module multiplier (
   input clk,
   input rst,
-  input [31:0] op1_i,
-  input [31:0] op2_i,
+  input [31:0] mul1_i,
+  input [31:0] mul2_i,
   input vld_i,
   output [63:0] res_o,
   output rdy_o
 );
+
+// select the smaller multiplicator as op2
+wire is_mul1_larger = (mul1_i > mul2_i);
+wire [31:0] op1 = is_mul1_larger ? mul1_i : mul2_i;
+wire [31:0] op2 = is_mul1_larger ? mul2_i : mul1_i;
 
 reg busy_r;
 always @(posedge clk) begin
@@ -39,7 +44,7 @@ always @(posedge clk) begin
   if (rst) begin
     op2_r <= 32'b0;
   end else if (fire) begin
-    op2_r <= op2_i;
+    op2_r <= op2;
   end else if (~done) begin
     op2_r <= op2_r & (~op2_one_hot);
   end
@@ -52,7 +57,7 @@ always @(posedge clk) begin
   end else if (fire) begin
     op1_sh_r <= 63'b0;
   end else if (~done) begin
-    op1_sh_r <= (op1_i << op2_lsb_one_idx);
+    op1_sh_r <= (op1 << op2_lsb_one_idx);
   end
 end
 
