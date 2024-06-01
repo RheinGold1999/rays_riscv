@@ -125,7 +125,6 @@ always @(posedge clk) begin
   end else if (state_IF) begin
     inst_r <= mem_rdata_i;
   end
-  
 end
 
 wire is_alu_reg = inst_r[6:0] == 7'b011_0011;   // rd <- rs1 OP rs2
@@ -278,6 +277,37 @@ always @(posedge clk) begin
 end
 
 // ----------------------------------------------------------------------------
+// Performance
+// ----------------------------------------------------------------------------
+reg [63:0] cycle_r;
+always @(posedge clk) begin
+  if (rst) begin
+    cycle_r <= 64'b0;
+  end else begin
+    cycle_r <= cycle_r + 1;
+  end
+end
+
+reg [63:0] instret_r;
+always @(posedge clk) begin
+  if (rst) begin
+    instret_r <= 64'b0;
+  end else if (state_IF) begin
+    instret_r <= instret_r + 1;
+  end
+end
+
+wire is_csrrs = is_system & (funct3 == 3'b010);
+
+wire [31:0] csrrs_data = (
+  (inst_r[21]) ? (
+    inst_r[27] ? instret_r[63:32] : instret_r[31:0]
+  ) : (
+    inst_r[27] ? cycle_r[63:32] : cycle_r[31:0]
+  )
+);
+
+// ----------------------------------------------------------------------------
 // ALU
 // ----------------------------------------------------------------------------
 // two types:
@@ -392,12 +422,6 @@ end
 // JAL rd, imm: rd <- PC + 4; PC <- PC + Jimm
 // JALR rd, rs1, imm: rd <- PC + 4; PC <- rs1 + Iimm
 
-// wire [31:0] pc_plus_4 = pc_r + 4;
-// wire [31:0] pc_plus_4 = alu_out;
-// wire [31:0] pc_plus_Jimm = pc_r + Jimm;
-// wire [31:0] pc_plus_Uimm = pc_r + Uimm;
-// wire [31:0] rs1_plus_Iimm = rs1_r + Iimm;
-
 wire [31:0] next_pc_add1 = is_jalr ? rs1_r : pc_r;
 wire [31:0] next_pc_add2 = (
   (is_branch & is_branch_taken) ? Bimm :
@@ -409,12 +433,6 @@ wire [31:0] next_pc_add2 = (
 // ----------------------------------------------------------------------------
 // Generate Next PC
 // ----------------------------------------------------------------------------
-// wire [31:0] next_pc = (
-//   (is_branch & is_branch_taken) ? pc_plus_Bimm :
-//   (is_jal) ? pc_plus_Jimm :
-//   (is_jalr) ? rs1_plus_Iimm :
-//   pc_plus_4
-// );
 wire [31:0] next_pc = next_pc_add1 + next_pc_add2;
 
 reg [31:0] pc_r;
@@ -505,7 +523,11 @@ wire wb_en = (
   (is_alu_reg | is_alu_imm | is_jal | is_jalr | is_auipc | is_lui | is_load)
 );
 
-wire [31:0] wb_data = is_load ? load_data : alu_out_r;
+wire [31:0] wb_data = (
+  is_load ? load_data : 
+  is_csrrs ? csrrs_data : 
+  alu_out_r
+);
 
 // ----------------------------------------------------------------------------
 // Output Interface

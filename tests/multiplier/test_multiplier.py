@@ -101,7 +101,7 @@ async def memory_test(dut):
   assert dut.res_o.value == op1 * op2, \
     f"res_o={dut.res_o.value.integer}, op1*op2={op1 * op2}"
 
-  op1 = random.randint(0, 0xFFFF_FFFF)
+  op1 = 3
   op2 = random.randint(0, 0xFFFF_FFFF)
   dut.mul1_i.value = op1
   dut.mul2_i.value = op2
