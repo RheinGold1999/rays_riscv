@@ -63,7 +63,7 @@ async def test_soc(dut):
     if dut.u_memory.MEM[i].value.integer:
       dut._log.info(f"memory.MEM[{i}]={dut.u_memory.MEM[i].value.integer:#x}")
 
-  tick_limit = 100000
+  tick_limit = 10000000
   uart_output = ""
 
   for cyc in range(tick_limit):
@@ -72,7 +72,8 @@ async def test_soc(dut):
       uart_output += chr(dut.u_uart.mem_wdata_i.value & 0xFF)
     if (dut.u_cpu.state_r.value == 4 and 
         dut.u_cpu.inst_r.value == EBREAK()):
-      print(uart_output)
+      with open ("uart.log", 'w') as f:
+        print(uart_output, file=f)
       raise TestSuccess("sim done")
   
   assert False, f"reach tick_limit={tick_limit}"

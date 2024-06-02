@@ -38,7 +38,8 @@ iverilog_dump.v:
 
 log:
 	grep "CPU" cocotb.log > cpu.log
-	grep "UART" cocotb.log > uart.log
+	grep "UART" cocotb.log > uart_.log
+	grep " RD" cocotb.log > csrrs.log
 
 clean::
 	@rm -rf iverilog_dump.v

@@ -4,21 +4,21 @@
 
 int main()
 {
-  // for (int i = 0; i < 1; ++i) {
-  //   unsigned long long cycles = rdcycle();
-  //   unsigned long long instret = rdcycle();
-  //   print_str("i=");
-  //   print_dec((unsigned int)i);
-  //   print_str("    ");
-  //   print_str("cycles=");
-  //   print_dec((unsigned int)cycles);
-  //   print_str("    ");
-  //   print_str("instret=");
-  //   print_dec((unsigned int)instret);
-  //   print_chr('\n');
-  // }
+  for (int i = 0; i < 2; ++i) {
+    unsigned long long cycles = rdcycle();
+    unsigned long long instret = rdinstret();
+    print_str("i=");
+    print_dec((unsigned int)i);
+    print_str("    ");
+    print_str("cycles=");
+    print_dec((unsigned int)cycles);
+    print_str("    ");
+    print_str("instret=");
+    print_dec((unsigned int)instret);
+    print_chr('\n');
+  }
   unsigned long long cycles = rdcycle();
-  unsigned long long instret = rdcycle();
+  unsigned long long instret = rdinstret();
   unsigned int CPI_100 = div((unsigned int)mul(100, cycles), instret);
   print_str("cycles=");
   print_dec((unsigned int)cycles);
