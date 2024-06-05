@@ -2,7 +2,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-`include "define.v"
+`include "define.vh"
 `include "processor.v"
 `include "memory.v"
 `include "uart.v"

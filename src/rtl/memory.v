@@ -1,4 +1,4 @@
-`include "define.v"
+`include "define.vh"
 
 `resetall
 `timescale 1ns / 1ps

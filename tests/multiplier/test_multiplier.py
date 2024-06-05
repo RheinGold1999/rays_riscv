@@ -11,7 +11,7 @@ from cocotb.result import TestSuccess
 
 
 @cocotb.test()
-async def memory_test(dut):
+async def multiplier_test(dut):
 
   clock = Clock(dut.clk, 10, 'ns')
   cocotb.start_soon(clock.start(start_high=False))

@@ -13,6 +13,9 @@ wire is_mul1_larger = (mul1_i > mul2_i);
 wire [31:0] op1 = is_mul1_larger ? mul1_i : mul2_i;
 wire [31:0] op2 = is_mul1_larger ? mul2_i : mul1_i;
 
+wire fire = vld_i & (~busy_r);
+wire done = busy_r & (op2_r == 0);
+
 reg busy_r;
 always @(posedge clk) begin
   if (rst) begin
@@ -23,9 +26,6 @@ always @(posedge clk) begin
     busy_r <= 1'b0;
   end
 end
-  
-wire fire = vld_i & (~busy_r);
-wire done = busy_r & (op2_r == 0);
 
 reg [63:0] res_r;
 always @(posedge clk) begin
