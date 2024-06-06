@@ -9,10 +9,49 @@ module divider (
   output rdy_o
 );
 
-wire fire = vld_i & (~busy_r);
-wire done = busy_r & div1_r_lt_div2_sh & (div_msb_diff == 0);
+localparam [1:0] STATE_IDLE = 0;
+localparam [1:0] STATE_MSB1 = 1;
+localparam [1:0] STATE_MSB2 = 2;
+localparam [1:0] STATE_BUSY = 3;
 
-wire [31:0] div = busy_r ? div1_r : div2_i;
+reg [1:0] state_r;
+wire state_idle = (state_r == STATE_IDLE);
+wire state_msb1 = (state_r == STATE_MSB1);
+wire state_msb2 = (state_r == STATE_MSB2);
+wire state_busy = (state_r == STATE_BUSY);
+
+always @(posedge clk) begin
+  if (rst) begin
+    state_r <= STATE_IDLE;
+  end else begin
+    case (state_r)
+      STATE_IDLE: begin
+        if (vld_i) begin
+          state_r <= STATE_MSB1;
+        end
+      end
+      STATE_MSB1: begin
+        state_r <= STATE_MSB2;
+      end
+      STATE_MSB2: begin
+        state_r <= STATE_BUSY;
+      end
+      STATE_BUSY: begin
+        if (done) begin
+          if (vld_i) begin
+            state_r <= STATE_MSB1;
+          end else begin
+            state_r <= STATE_IDLE;
+          end
+        end
+      end
+    endcase
+  end
+end
+
+wire done = state_busy & (sh_cnt_r == 0) & div1_r_lt_div2_sh;
+
+wire [31:0] div = state_msb1 ? div1_i : div2_i;
 wire [4:0] msb_idx;
 msb_idx_calc u_msb_idx_calc (
   .div_i(div),
@@ -23,58 +62,37 @@ reg [4:0] div1_msb_idx_r;
 always @(posedge clk) begin
   if (rst) begin
     div1_msb_idx_r <= 5'b0;
-  end else if (busy_r) begin
+  end else if (state_msb1) begin
     div1_msb_idx_r <= msb_idx;
   end
 end
 
-reg [4:0] div2_msb_idx_r;
+wire [5:0] div_msb_diff = div1_msb_idx_r + {1'b1, ~msb_idx} + 1;
+
+reg [4:0] sh_cnt_r;
 always @(posedge clk) begin
   if (rst) begin
-    div2_msb_idx_r <= 5'b0;
-  end else if (fire) begin
-    div2_msb_idx_r <= msb_idx;
+    sh_cnt_r <= 5'b0;
+  end else if (state_msb2) begin
+    sh_cnt_r <= div_msb_diff[5] ? 0 : div_msb_diff[4:0];
+  end else if (state_busy) begin
+    sh_cnt_r <= (sh_cnt_r == 0) ? 0 : (sh_cnt_r - 1);
   end
 end
 
-wire [5:0] div_msb_diff_ori = div1_msb_idx_r + {1'b1, ~div2_msb_idx_r} + 1;
-wire [4:0] div_msb_diff = div_msb_diff_ori[5] ? 5'b0 : div_msb_diff_ori[4:0];
-
-reg [4:0] div_msb_diff_r;
-always @(posedge clk) begin
-  if (rst) begin
-    div_msb_diff_r <= 5'b0;
-  end else if (div1_r_lt_div2_sh & (div_msb_diff != 0)) begin
-    div_msb_diff_r <= div_msb_diff - 1;
-  end else begin
-    div_msb_diff_r <= div_msb_diff;
-  end
-end
-
-wire [31:0] div2_sh = div2_i << div_msb_diff_r;
-wire [32:0] div_diff = div1_r + {1'b1, ~div2_sh} + 1;
-wire div1_r_lt_div2_sh = div_diff[32];
-
-reg busy_r;
-always @(posedge clk) begin
-  if (rst) begin
-    busy_r <= 1'b0;
-  end else if (fire) begin
-    busy_r <= 1'b1;
-  end else if (done) begin
-    busy_r <= 1'b0;
-  end
-end
+wire [31:0] div2_sh = div2_i << sh_cnt_r;
+wire [32:0] div1_r_sub_div2_sh = div1_r + {1'b1, ~div2_sh} + 1;
+wire div1_r_lt_div2_sh = div1_r_sub_div2_sh[32];
 
 reg [31:0] div1_r;
 always @(posedge clk) begin
   if (rst) begin
     div1_r <= 32'b0;
-  end else if (fire) begin
+  end else if (state_msb1) begin
     div1_r <= div1_i;
-  end else if (~done) begin
+  end else if (state_busy) begin
     if (~div1_r_lt_div2_sh) begin
-      div1_r <= div_diff[31:0];
+      div1_r <= div1_r_sub_div2_sh[31:0];
     end
   end
 end
@@ -83,14 +101,18 @@ reg [31:0] res_q_r;
 always @(posedge clk) begin
   if (rst) begin
     res_q_r <= 32'b0;
-  end else if (~done) begin
-    res_q_r <= (res_q_r | (32'b1 << div_msb_diff_r));
+  end else if (state_msb1) begin
+    res_q_r <= 32'b0;
+  end else if (state_busy) begin
+    if (~div1_r_lt_div2_sh) begin
+      res_q_r[sh_cnt_r] <= 1'b1;
+    end
   end
 end
 
 assign res_q_o = res_q_r;
 assign res_r_o = div1_r;
-assign ryd_o = done;
+assign rdy_o = done;
 
 endmodule // divider
 

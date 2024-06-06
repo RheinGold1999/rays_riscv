@@ -22,6 +22,9 @@ async def divider_test(dut):
   await FallingEdge(dut.clk)
   dut.rst.value = 0
 
+  ##############################################################################
+  # test 1
+  ##############################################################################
   dut.vld_i.value = 1
   # op1 = random.randint(0, 0xFFFF_FFFF)
   op1 = 15
@@ -29,16 +32,108 @@ async def divider_test(dut):
   op2 = 6
   dut.div1_i.value = op1
   dut.div2_i.value = op2
+  await FallingEdge(dut.clk)
 
-  # while dut.rdy_o.value == 0:
-  #   await FallingEdge(dut.clk)
-
-  # assert dut.res_o.value == op1 * op2, \
-  #   f"res_o={dut.res_o.value.integer}, op1*op2={op1 * op2}"
-
-  # dut.vld_i.value = 0
-  # await FallingEdge(dut.clk)
-
-  for i in range(30):
+  while dut.rdy_o.value == 0:
     await FallingEdge(dut.clk)
 
+  assert dut.res_q_o.value == op1 // op2, \
+    f"res_q_o={dut.res_q_o.value.integer}, op1 // op2={op1 // op2}"
+
+  assert dut.res_r_o.value == op1 % op2, \
+    f"res_r_o={dut.res_r_o.value.integer}, op1 % op2={op1 % op2}"
+
+  ##############################################################################
+  # test 2
+  ##############################################################################
+  op1 = 31
+  op2 = 7
+  dut.div1_i.value = op1
+  dut.div2_i.value = op2
+  await FallingEdge(dut.clk)
+
+  while dut.rdy_o.value == 0:
+    await FallingEdge(dut.clk)
+
+  assert dut.res_q_o.value == op1 // op2, \
+    f"res_q_o={dut.res_q_o.value.integer}, op1 // op2={op1 // op2}"
+
+  assert dut.res_r_o.value == op1 % op2, \
+    f"res_r_o={dut.res_r_o.value.integer}, op1 % op2={op1 % op2}"
+
+  ##############################################################################
+  # test 3
+  ##############################################################################
+  op1 = 0
+  op2 = 7
+  dut.div1_i.value = op1
+  dut.div2_i.value = op2
+  await FallingEdge(dut.clk)
+
+  while dut.rdy_o.value == 0:
+    await FallingEdge(dut.clk)
+
+  assert dut.res_q_o.value == op1 // op2, \
+    f"res_q_o={dut.res_q_o.value.integer}, op1 // op2={op1 // op2}"
+
+  assert dut.res_r_o.value == op1 % op2, \
+    f"res_r_o={dut.res_r_o.value.integer}, op1 % op2={op1 % op2}"
+
+  ##############################################################################
+  # test 4
+  ##############################################################################
+  op1 = 2
+  op2 = 7
+  dut.div1_i.value = op1
+  dut.div2_i.value = op2
+  await FallingEdge(dut.clk)
+
+  while dut.rdy_o.value == 0:
+    await FallingEdge(dut.clk)
+
+  assert dut.res_q_o.value == op1 // op2, \
+    f"res_q_o={dut.res_q_o.value.integer}, op1 // op2={op1 // op2}"
+
+  assert dut.res_r_o.value == op1 % op2, \
+    f"res_r_o={dut.res_r_o.value.integer}, op1 % op2={op1 % op2}"
+
+  ##############################################################################
+  # test 5
+  ##############################################################################
+  op1 = 11
+  op2 = 6
+  dut.div1_i.value = op1
+  dut.div2_i.value = op2
+  await FallingEdge(dut.clk)
+
+  while dut.rdy_o.value == 0:
+    await FallingEdge(dut.clk)
+
+  assert dut.res_q_o.value == op1 // op2, \
+    f"res_q_o={dut.res_q_o.value.integer}, op1 // op2={op1 // op2}"
+
+  assert dut.res_r_o.value == op1 % op2, \
+    f"res_r_o={dut.res_r_o.value.integer}, op1 % op2={op1 % op2}"
+
+  ##############################################################################
+  # test 6
+  ##############################################################################
+  for _ in range(10):
+    dut.vld_i.value = 0
+    await FallingEdge(dut.clk)
+
+    dut.vld_i.value = 1
+    op1 = random.randint(0, 0xFFFF_FFFF)
+    op2 = random.randint(1, 0xFFFF_FFFF)
+    dut.div1_i.value = op1
+    dut.div2_i.value = op2
+    await FallingEdge(dut.clk)
+
+    while dut.rdy_o.value == 0:
+      await FallingEdge(dut.clk)
+
+    assert dut.res_q_o.value == op1 // op2, \
+      f"res_q_o={dut.res_q_o.value.integer}, op1 // op2={op1 // op2}"
+
+    assert dut.res_r_o.value == op1 % op2, \
+      f"res_r_o={dut.res_r_o.value.integer}, op1 % op2={op1 % op2}"
