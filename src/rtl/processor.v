@@ -71,19 +71,19 @@ end
 // CPU State Machine
 // ----------------------------------------------------------------------------
 // define state parameter
-localparam IF  = 0;
-localparam ID  = 1;
-localparam EXE = 2;
-localparam MEM = 3;
-localparam WB  = 4;
+localparam [4:0] IF  = 5'b00001;
+localparam [4:0] ID  = 5'b00010;
+localparam [4:0] EXE = 5'b00100;
+localparam [4:0] MEM = 5'b01000;
+localparam [4:0] WB  = 5'b10000;
 
-wire state_IF = state_r == IF;
-wire state_ID = state_r == ID;
-wire state_EXE = state_r == EXE;
-wire state_MEM = state_r == MEM;
-wire state_WB = state_r == WB;
+wire state_IF  = state_r[0];
+wire state_ID  = state_r[1];
+wire state_EXE = state_r[2];
+wire state_MEM = state_r[3];
+wire state_WB  = state_r[4];
 
-reg [2:0] state_r;
+reg [4:0] state_r;
 always @(posedge clk) begin
   if (rst) begin
     state_r <= WB;

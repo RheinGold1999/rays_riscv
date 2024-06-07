@@ -49,11 +49,11 @@ always @(posedge clk) begin
   end
 end
 
-wire done = state_busy & (sh_cnt_r == 0) & div1_r_lt_div2_sh;
+wire done = state_busy & ~(|sh_cnt_r) & div1_r_lt_div2_sh;
 
 wire [31:0] div = state_msb1 ? div1_i : div2_i;
 wire [4:0] msb_idx;
-msb_idx_calc u_msb_idx_calc (
+msb_idx_calc2 u_msb_idx_calc (
   .div_i(div),
   .msb_idx_o(msb_idx)
 );
@@ -181,3 +181,24 @@ end
 assign msb_idx_o = msb_idx_r;
 
 endmodule // msb_idx_calc
+
+// equivalent to msb_idx_calc
+module msb_idx_calc2 (
+  input [31:0] div_i,
+  output [4:0] msb_idx_o
+);
+
+reg [4:0] msb_idx_r;
+integer i;
+always @(*) begin
+  for (i = 0; i < 32; i++) begin
+    if (div_i[i]) begin
+      msb_idx_r = i;
+    end
+  end
+end
+
+assign msb_idx_o = msb_idx_r;
+
+endmodule // msb_idx_calc2
+
