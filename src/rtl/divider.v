@@ -9,12 +9,12 @@ module divider (
   output rdy_o
 );
 
-localparam [1:0] STATE_IDLE = 0;
-localparam [1:0] STATE_MSB1 = 1;
-localparam [1:0] STATE_MSB2 = 2;
-localparam [1:0] STATE_BUSY = 3;
+localparam [3:0] STATE_IDLE = 1 << 0;
+localparam [3:0] STATE_MSB1 = 1 << 1;
+localparam [3:0] STATE_MSB2 = 1 << 2;
+localparam [3:0] STATE_BUSY = 1 << 3;
 
-reg [1:0] state_r;
+reg [3:0] state_r;
 wire state_idle = (state_r == STATE_IDLE);
 wire state_msb1 = (state_r == STATE_MSB1);
 wire state_msb2 = (state_r == STATE_MSB2);

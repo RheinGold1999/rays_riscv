@@ -1,12 +1,12 @@
-`resetall
-`timescale 1ns / 1ps
-`default_nettype none
-
 `include "define.vh"
 `include "processor.v"
 `include "memory.v"
 `include "uart.v"
 `include "mem_bus.v"
+
+`resetall
+`timescale 1ns / 1ps
+`default_nettype none
 
 module soc (
   input clk,
@@ -92,5 +92,6 @@ mem_bus u_bus(
   .uart_wmask_o(uart_wmask_w),
   .uart_wdata_o(uart_wdata_w)
 );
+
 
 endmodule
